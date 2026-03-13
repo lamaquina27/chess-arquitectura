@@ -9,7 +9,7 @@ function Home(){
                 <h1>
                     Bienvenidos a cheesse
                 </h1>
-                <Button></Button>
+                <Button funcion="iniciar"></Button>
                 </div>
             </div>
     

@@ -35,3 +35,10 @@
     font-size: 2rem;
     cursor: pointer;
 }
+.opciones{
+    margin-top: 20px;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+}

@@ -1,29 +1,35 @@
 import { iniciarPartida } from "../api/iniciar_partida";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Popup from "./Popup.jsx";
+import "./Button.css"
 
 
-
-function Button() {
+function Button(props) {
     const navigate = useNavigate()
-    const iniciarP = async () => {
-    try {
+    const [usePopup,setUsePopup] = useState(false)
+    let texto = props.funcion == "iniciar" ? "Inicia Partida" : "Abandonar Partida"
+    const metodos = async () => {
     
-        
-        const data = await iniciarPartida();
-        console.log("partida")
-        navigate("/partida")
+        if(props.funcion == "iniciar"){
+            
+            navigate("/partida")
+            
+        }else if(props.funcion=="abandonar"){
+            setUsePopup(true)
+        }
         
 
-    } catch (error) {
-        console.error("Error llamando API:", error);
-    }
+
     
     };
   return (
-    
-          <button className='iniciar' onClick={iniciarP} >
-          Inicia Partida
-          </button>
+    <>
+        <button  onClick={metodos} className="boton">
+            {texto}
+        </button>
+        {usePopup && <Popup cerrar={()=>setUsePopup(false)}/>}
+    </>
     
   )
 }

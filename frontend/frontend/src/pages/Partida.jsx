@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useEffect } from "react"
 import "./Partida.css"
+import Button from "../components/Button"
 
 function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
@@ -38,6 +39,9 @@ function Partida() {
                         </div>
                     ))
                 ))}
+            </div>
+            <div className="opciones">
+                <Button funcion='abandonar'></Button>
             </div>
         </div>
     )
