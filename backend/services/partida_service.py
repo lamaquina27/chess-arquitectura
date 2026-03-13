@@ -5,7 +5,16 @@ def iniciar_partida():
     partida = Partida(
         jugador_blanco= "Jugador_1",
         jugador_negro= "Jugador_2",
-        tablero = [0,0,0]
+        tablero = [
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0]
+        ]
 
     )
     return partida
