@@ -1,9 +1,10 @@
 .partida-container {
+    background-color: black;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
-    color: white;
+    padding: 150px;
+    color: rgb(255, 255, 255);
 }
 
 .info-panel {
@@ -16,8 +17,7 @@
 
 .tablero {
     display: grid;
-    grid-template-columns: repeat(3, 80px);
-    /* 3 columnas por ahora */
+    grid-template-columns: repeat(8, 80px);
     gap: 5px;
     background: #444;
     padding: 10px;

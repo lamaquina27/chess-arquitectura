@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useEffect } from "react"
+import "./Partida.css"
 
 function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
@@ -30,10 +31,12 @@ function Partida() {
             </div>
             <div className="tablero">
                 {/* 5. Por ahora mostramos los datos del tablero que vienen del backend */}
-                {infoPartida.tablero.map((celda, i) => (
-                    <div key={i} className="celda">
-                        {celda === 0 ? "" : celda}
-                    </div>
+                {infoPartida.tablero.map((fila, i) => (
+                    fila.map((celda, j) => (
+                        <div key={j} className="celda">
+                            {celda === 0 ? "" : celda}
+                        </div>
+                    ))
                 ))}
             </div>
         </div>
