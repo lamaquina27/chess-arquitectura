@@ -1,22 +1,17 @@
 
 import './App.css'
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Partida from "./pages/Partida.jsx";
+import Home from "./pages/Home.jsx";
 function App() {
 
   return (
-    <>
-      <div className='main'>
-        <div className='cont'>
-          <h1>
-            Bienvenidos a cheesse
-          </h1>
-          <button className='iniciar'>
-          Inicia Partida
-          </button>
-        </div>
-      </div>
-    
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/partida" element={<Partida />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
