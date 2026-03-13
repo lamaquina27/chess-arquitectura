@@ -1,8 +1,8 @@
 import { iniciarPartida } from "../api/iniciar_partida";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Popup from "./Popup.jsx";
 import "./Button.css"
+import PopupConfirmacion from "./PopupConfirmacion.jsx";
 
 
 function Button(props) {
@@ -28,7 +28,7 @@ function Button(props) {
         <button  onClick={metodos} className="boton">
             {texto}
         </button>
-        {usePopup && <Popup cerrar={()=>setUsePopup(false)}/>}
+        {usePopup && <PopupConfirmacion cerrar={()=>setUsePopup(false)}/>}
     </>
     
   )

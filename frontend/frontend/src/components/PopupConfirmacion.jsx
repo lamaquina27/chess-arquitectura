@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import "./Popup.css"
-function Popup(props){
+import ButtonConfirmacion from './ButtonConfirmacion';
+function PopupConfirmacion(props){
     const [isOpen,setOpen] = useState(true)
 
     return (
@@ -10,7 +11,7 @@ function Popup(props){
 
         <div className="botones">
           <button onClick={props.cerrar}>Cancelar</button>
-          <button>Abandonar</button>
+          <ButtonConfirmacion></ButtonConfirmacion>
         </div>
 
       </div>
@@ -18,4 +19,4 @@ function Popup(props){
   )
 
 }
-export default Popup
+export default PopupConfirmacion

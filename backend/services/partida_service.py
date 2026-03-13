@@ -18,3 +18,7 @@ def iniciar_partida():
 
     )
     return partida
+def abandono_partida(ganador,partida):
+    partida.ganador=ganador
+    return partida
+
