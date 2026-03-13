@@ -25,7 +25,7 @@ def abandono():
             "error":"partida no encontrada"
         }
        
-    partida = abandono_partida("Negro")
+    partida = abandono_partida("Negro",partida)
     
     return {
         "jugador_blanco": partida.jugador_blanco,
