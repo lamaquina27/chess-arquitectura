@@ -59,6 +59,14 @@
     text-shadow: 0px 3px 4px rgba(0, 0, 0, 0.6);
 }
 
+/* --- Estado: Celda seleccionada --- */
+.celda-seleccionada {
+    outline: 4px solid #ffeb3b; 
+    outline-offset: -4px;
+    z-index: 10;
+    background-color: rgba(255, 235, 59, 0.4);
+}
+
 .opciones {
     margin-top: 20px;
     display: flex;
