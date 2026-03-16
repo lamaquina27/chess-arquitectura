@@ -13,7 +13,7 @@ function PopupPerdida(){
                     <h2>Que triste perdiste!</h2>
 
                     <div className="botones">
-                        <button onClick={metodos}> Volver a home</button>
+                        <button  className="boton" onClick={metodos}> Volver a home</button>
                     </div>
 
                 </div>

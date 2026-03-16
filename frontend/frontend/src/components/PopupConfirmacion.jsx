@@ -18,7 +18,7 @@ function PopupConfirmacion(props){
         <h2>¿Seguro que quieres abandonar?</h2>
 
         <div className="botones">
-          <button onClick={props.cerrar}>Cancelar</button>
+          <button className="boton" onClick={props.cerrar}>Cancelar</button>
           <ButtonConfirmacion onClick={metodos}></ButtonConfirmacion>
           {isOpen && <PopupPerdida/>}
         </div>

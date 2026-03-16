@@ -19,6 +19,12 @@
   padding: 25px;
   border-radius: 8px;
 }
+.botones{
+  display: flex;
+  justify-content: center;
+  gap:25px;
+}
+
 h2{
     color: black;
 }
