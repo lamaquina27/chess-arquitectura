@@ -1,6 +1,11 @@
 import "./PopupPerdida.css"
-function PopupPerdida(){
+import { useNavigate } from "react-router-dom";
 
+function PopupPerdida(){
+    const navigate = useNavigate()
+    const metodos = async () => {
+        navigate("/")
+    };
     return(
         <>
             <div className="popup-overlay">
@@ -8,7 +13,7 @@ function PopupPerdida(){
                     <h2>Que triste perdiste!</h2>
 
                     <div className="botones">
-                        <button></button>
+                        <button onClick={metodos}> Volver a home</button>
                     </div>
 
                 </div>

@@ -1,4 +1,3 @@
-import { iniciarPartida } from "../api/iniciar_partida";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Button.css"
