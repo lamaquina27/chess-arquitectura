@@ -20,6 +20,14 @@ function Partida() {
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
 
+    // Usamos los símbolos "rellenos" para ambos colores.
+    // Diferenciaremos a las blancas de las negras usando colores en el CSS.
+    const piezasDict = {
+        'R': '♚', 'D': '♛', 'T': '♜', 'A': '♝', 'C': '♞', 'P': '♟',
+        'r': '♚', 'd': '♛', 't': '♜', 'a': '♝', 'c': '♞', 'p': '♟',
+        '': ''
+    };
+
     return (
         <div className="partida-container">
             <h1>Partida de Ajedrez</h1>
@@ -31,13 +39,22 @@ function Partida() {
                 <p className="turno">Turno actual: <b>{infoPartida.turno}</b></p>
             </div>
             <div className="tablero">
-                {/* 5. Por ahora mostramos los datos del tablero que vienen del backend */}
+                {/* 5. Renderizado del tablero con colores alternados y caracteres Unicode */}
                 {infoPartida.tablero.map((fila, i) => (
-                    fila.map((celda, j) => (
-                        <div key={j} className="celda">
-                            {celda === 0 ? "" : celda}
-                        </div>
-                    ))
+                    fila.map((celda, j) => {
+                        const isClara = (i + j) % 2 === 0;
+                        const colorClase = isClara ? "celda-clara" : "celda-oscura";
+
+                        // Determinamos si la pieza es blanca verificando si la letra es mayúscula
+                        const esBlanca = celda !== "" && celda === celda.toUpperCase();
+                        const clasePieza = celda !== "" ? (esBlanca ? "pieza-negra" : "pieza-blanca") : "";
+
+                        return (
+                            <div key={`${i}-${j}`} className={`celda ${colorClase} ${clasePieza}`}>
+                                {piezasDict[celda] || ""}
+                            </div>
+                        );
+                    })
                 ))}
             </div>
             <div className="opciones">
