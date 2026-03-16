@@ -5,6 +5,7 @@ import Button from "../components/Button"
 
 function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
+    const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) // Para la celda origen: {fila, columna}
 
     useEffect(() => {
         fetch("http://localhost:8000/partida/iniciar", {
@@ -19,6 +20,63 @@ function Partida() {
     }, [])
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
+
+    const manejarClickCelda = (i, j, celda) => {
+        // Fase 1: Seleccionar origen
+        if (!celdaSeleccionada) {
+            // Solo seleccionamos si hay una pieza en la celda
+            if (celda !== "") {
+                setCeldaSeleccionada({ fila: i, columna: j })
+            }
+        } 
+        // Fase 2: Seleccionar destino o deseleccionar
+        else {
+            const { fila: from_row, columna: from_col } = celdaSeleccionada
+            
+            // Si hace clic en la misma celda, deseleccionamos
+            if (from_row === i && from_col === j) {
+                setCeldaSeleccionada(null)
+                return
+            }
+
+            // Hace clic en otro lado, enviamos movimiento
+            enviarMovimientoAPI(from_row, from_col, i, j)
+        }
+    }
+
+    const enviarMovimientoAPI = (from_row, from_col, to_row, to_col) => {
+        fetch("http://localhost:8000/partida/mover", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                from_row,
+                from_col,
+                to_row,
+                to_col
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error("Error del servidor:", data.error)
+            } else {
+                console.log("Movimiento realizado:", data)
+                // Actualizamos la información mostrada conservando los jugadores
+                setInfoPartida(prev => ({
+                    ...prev,
+                    turno: data.turno,
+                    tablero: data.tablero
+                }))
+            }
+        })
+        .catch(error => console.error("Error al mover pieza:", error))
+        .finally(() => {
+            // Limpiamos la selección una vez enviado (o fallado)
+            setCeldaSeleccionada(null)
+        })
+    }
 
     // Usamos los símbolos "rellenos" para ambos colores.
     // Diferenciaremos a las blancas de las negras usando colores en el CSS.
@@ -49,8 +107,16 @@ function Partida() {
                         const esBlanca = celda !== "" && celda === celda.toUpperCase();
                         const clasePieza = celda !== "" ? (esBlanca ? "pieza-negra" : "pieza-blanca") : "";
 
+                        // Determinamos si es la celda seleccionada
+                        const isSeleccionada = celdaSeleccionada?.fila === i && celdaSeleccionada?.columna === j;
+                        const claseSeleccionada = isSeleccionada ? "celda-seleccionada" : "";
+
                         return (
-                            <div key={`${i}-${j}`} className={`celda ${colorClase} ${clasePieza}`}>
+                            <div 
+                                key={`${i}-${j}`} 
+                                className={`celda ${colorClase} ${clasePieza} ${claseSeleccionada}`}
+                                onClick={() => manejarClickCelda(i, j, celda)}
+                            >
                                 {piezasDict[celda] || ""}
                             </div>
                         );
