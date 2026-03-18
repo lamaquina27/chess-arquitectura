@@ -46,6 +46,7 @@ function Partida() {
         iniciarPartida().then(data=>{
             setInfoPartida(data)
             setTurno(data.turno)
+            
         })
     }, [])
 
@@ -81,6 +82,7 @@ function Partida() {
 
             // Enviar movimiento al backend
             moverPieza(celdaSeleccionada, casilla, piezaMovida)
+            setTurno(turno === "blanco" ? "negro" : "blanco")
             setCeldaSeleccionada(null)
         }
     }

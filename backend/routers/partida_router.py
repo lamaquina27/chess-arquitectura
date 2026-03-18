@@ -37,7 +37,7 @@ def abandono():
     return {
         "jugador_blanco": partida.jugador_blanco,
         "jugador_negro": partida.jugador_negro,
-        "Ganador ": partida.ganador
+        "ganador ": partida.ganador
     }
 
 @router.post("/mover")
