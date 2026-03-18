@@ -39,7 +39,7 @@ function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
     const [tablero, setTablero] = useState(() => crearTableroInicial())
     const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) // Casilla algebraica: "e2"
-
+    const[turno,setTurno]=useState("")
     useEffect(() => {
         fetch("http://localhost:8000/partida/iniciar", {
             method: "POST"
