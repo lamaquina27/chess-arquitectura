@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useEffect } from "react"
 import { moverPieza } from "../api/mover_pieza"
+import { iniciarPartida } from "../api/iniciar_partida"
 import "./Partida.css"
 import Button from "../components/Button"
 
@@ -41,53 +42,12 @@ function Partida() {
     const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) // Casilla algebraica: "e2"
     const[turno,setTurno]=useState("")
     useEffect(() => {
-        fetch("http://localhost:8000/partida/iniciar", {
-            method: "POST"
+        //Estado para inciiar la partida
+        iniciarPartida().then(data=>{
+            setInfoPartida(data)
+            setTurno(data.turno)
         })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Datos recibidos:", data)
-                setInfoPartida(data)
-                setTurno(data.turno)
-            })
-            .catch(error => console.error("Error al conectar con el backend:", error))
     }, [])
-
-    const handleClickCelda = async (casilla) => {
-        const pieza = tablero[casilla]
-
-        if (!celdaSeleccionada) {
-            // Seleccionar una pieza
-            if (pieza !== "") {
-                setCeldaSeleccionada(casilla)
-            }
-        } else {
-            if (casilla === celdaSeleccionada) {
-                // Deseleccionar
-                setCeldaSeleccionada(null)
-                return
-            }
-
-            // Mover la pieza
-            const piezaOrigen = tablero[celdaSeleccionada]
-            const nuevoTablero = { ...tablero }
-            nuevoTablero[casilla] = piezaOrigen
-            nuevoTablero[celdaSeleccionada] = ""
-            setTablero(nuevoTablero)
-
-            // Enviar al backend
-            try {
-                const resultado = await moverPieza(celdaSeleccionada, casilla, piezaOrigen)
-                if (resultado.turno) {
-                    setTurno(resultado.turno)
-                }
-            } catch (error) {
-                console.error("Error al enviar movimiento:", error)
-            }
-
-            setCeldaSeleccionada(null)
-        }
-    }
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
 
