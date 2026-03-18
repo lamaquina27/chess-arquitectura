@@ -5,10 +5,9 @@ from pydantic import BaseModel
 router = APIRouter()
 
 class Movimiento(BaseModel):
-    from_row: int
-    from_col: int
-    to_row: int
-    to_col: int
+    casilla_inicio: str
+    casilla_llegada: str
+    pieza: str
 
 partidas=[]
 
@@ -21,7 +20,6 @@ def iniciar():
         "jugador_blanco": partida.jugador_blanco,
         "jugador_negro": partida.jugador_negro,
         "turno": partida.turno,
-        "tablero": partida.tablero
     }
 
 @router.post("/abandono")
@@ -49,13 +47,14 @@ def mover(movimiento: Movimiento):
     
     partida = mover_pieza(
         partida=partida,
-        from_row=movimiento.from_row,
-        from_col=movimiento.from_col,
-        to_row=movimiento.to_row,
-        to_col=movimiento.to_col
+        casilla_inicio=movimiento.casilla_inicio,
+        casilla_llegada=movimiento.casilla_llegada,
+        pieza=movimiento.pieza
     )
     
     return {
         "turno": partida.turno,
-        "tablero": partida.tablero
-    }
+        "casilla_inicio": movimiento.casilla_inicio,
+        "casilla_llegada": movimiento.casilla_llegada,
+        "pieza": movimiento.pieza
+    }

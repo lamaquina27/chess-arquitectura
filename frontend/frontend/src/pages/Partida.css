@@ -3,8 +3,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 150px;
+    padding: 50px 20px;
     color: rgb(255, 255, 255);
+    min-height: 100vh;
 }
 
 .info-panel {
@@ -15,11 +16,56 @@
     text-align: center;
 }
 
+/* --- Wrapper del tablero con coordenadas --- */
+.tablero-wrapper {
+    display: flex;
+    align-items: flex-start;
+}
+
+.coordenadas-filas {
+    display: flex;
+    flex-direction: column;
+    margin-right: 6px;
+}
+
+.coordenada-fila {
+    width: 24px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ccc;
+}
+
+.tablero-inner {
+    display: flex;
+    flex-direction: column;
+}
+
 .tablero {
     display: grid;
     grid-template-columns: repeat(8, 80px);
     border: 5px solid #444;
     border-radius: 5px;
+}
+
+.coordenadas-columnas {
+    display: flex;
+    margin-top: 6px;
+    margin-left: 5px;
+}
+
+.coordenada-col {
+    width: 80px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ccc;
 }
 
 .celda {
@@ -29,42 +75,42 @@
     justify-content: center;
     align-items: center;
     font-size: 3.5rem;
-    /* Tamaño ajustado de la pieza */
     cursor: pointer;
     user-select: none;
+    transition: background-color 0.15s ease;
+}
+
+.celda:hover {
+    filter: brightness(1.15);
 }
 
 .celda-clara {
     background-color: #f0d9b5;
-    /* Color madera clara */
 }
 
 .celda-oscura {
     background-color: #b58863;
-    /* Color madera oscura */
 }
 
 /* --- Estilos para las piezas --- */
 .pieza-blanca {
     color: #ffffff;
-    /* Delineado negro para que no se pierda en cuadros claros */
     -webkit-text-stroke: 1.5px #616161;
     text-shadow: 0px 3px 4px rgba(255, 255, 255, 0.4);
 }
 
 .pieza-negra {
     color: #111111;
-    /* Delineado blanco sutil para que resalte en los cuadros oscuros */
     -webkit-text-stroke: 1px #616161;
     text-shadow: 0px 3px 4px rgba(0, 0, 0, 0.6);
 }
 
 /* --- Estado: Celda seleccionada --- */
 .celda-seleccionada {
-    outline: 4px solid #ffeb3b; 
+    outline: 4px solid #ffeb3b;
     outline-offset: -4px;
     z-index: 10;
-    background-color: rgba(255, 235, 59, 0.4);
+    background-color: rgba(255, 235, 59, 0.4) !important;
 }
 
 .opciones {
@@ -73,4 +119,11 @@
     align-items: center;
     justify-content: center;
     width: 50%;
+}
+
+.loading {
+    color: white;
+    font-size: 1.5rem;
+    text-align: center;
+    padding: 100px;
 }
