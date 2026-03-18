@@ -1,5 +1,7 @@
 from services.partida_service import abandono_partida, iniciar_partida, mover_pieza
+from services.partida_service import abandono_partida, iniciar_partida, mover_pieza
 from fastapi import APIRouter
+from pydantic import BaseModel
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -10,6 +12,11 @@ class Movimiento(BaseModel):
     pieza: str
 
 partidas=[]
+
+class Movimiento(BaseModel):
+    casilla_inicio: str
+    casilla_llegada: str
+    pieza: str
 
 @router.post("/iniciar")
 def iniciar():

@@ -48,9 +48,46 @@ function Partida() {
             .then(data => {
                 console.log("Datos recibidos:", data)
                 setInfoPartida(data)
+                setTurno(data.turno)
             })
             .catch(error => console.error("Error al conectar con el backend:", error))
     }, [])
+
+    const handleClickCelda = async (casilla) => {
+        const pieza = tablero[casilla]
+
+        if (!celdaSeleccionada) {
+            // Seleccionar una pieza
+            if (pieza !== "") {
+                setCeldaSeleccionada(casilla)
+            }
+        } else {
+            if (casilla === celdaSeleccionada) {
+                // Deseleccionar
+                setCeldaSeleccionada(null)
+                return
+            }
+
+            // Mover la pieza
+            const piezaOrigen = tablero[celdaSeleccionada]
+            const nuevoTablero = { ...tablero }
+            nuevoTablero[casilla] = piezaOrigen
+            nuevoTablero[celdaSeleccionada] = ""
+            setTablero(nuevoTablero)
+
+            // Enviar al backend
+            try {
+                const resultado = await moverPieza(celdaSeleccionada, casilla, piezaOrigen)
+                if (resultado.turno) {
+                    setTurno(resultado.turno)
+                }
+            } catch (error) {
+                console.error("Error al enviar movimiento:", error)
+            }
+
+            setCeldaSeleccionada(null)
+        }
+    }
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
 
@@ -104,7 +141,7 @@ function Partida() {
             <div className="info-panel">
                 <p>⚪ <b>Blancas:</b> {infoPartida.jugador_blanco}</p>
                 <p>⚫ <b>Negras:</b> {infoPartida.jugador_negro}</p>
-                <p className="turno">Turno actual: <b>{infoPartida.turno}</b></p>
+                <p className="turno">Turno actual: <b>{turno}</b></p>
             </div>
 
             <div className="tablero-wrapper">
@@ -153,6 +190,7 @@ function Partida() {
                     </div>
                 </div>
             </div>
+
 
             <div className="opciones">
                 <Button funcion='abandonar'></Button>
