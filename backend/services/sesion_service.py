@@ -1,3 +1,4 @@
+from jose import jwt
 from jose.exceptions import JWTError
 from datetime import datetime,timedelta,timezone
 
@@ -14,7 +15,7 @@ def crear_token(data:dict,expiracion:timedelta = None):
     to_encoded.update({"exp":expira})
     return jwt.encode(to_encoded,LLAVE_SECRETA,algorithm= ALGORITMO)
 
-def decodificar_token(toke : str):
+def decodificar_token(token : str):
     try:
         payload = jwt.decode(token,LLAVE_SECRETA,algorithms=[ALGORITMO])
         return payload
