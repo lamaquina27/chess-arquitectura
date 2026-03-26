@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from routers.partida_router import router as partida_router
+from routers.registro_router import router as registro_router
 from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 origins = [
@@ -15,3 +16,4 @@ app.add_middleware(
 )
 
 app.include_router(partida_router, prefix="/partida")
+app.include_router(registro_router, prefix="/api")
