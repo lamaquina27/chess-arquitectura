@@ -13,8 +13,16 @@ function Sesion() {
             alert("llene todos los campos")
             return
         }
+
+        
         e.preventDefault()
-        await iniciarSesion(username, password)
+        const data = await iniciarSesion(username, password)
+        console.log(data)
+        if(data.error){
+            alert(data.mensaje)
+                navigate("/")
+                return
+        }
         navigate('/inicio')
     }
     return (
