@@ -1,7 +1,28 @@
-.boton{
-    width: 25%;
-    height: 10%;
-    background-color: aquamarine;
-    color: black;
-
+.boton {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--accent-purple), #4f46e5);
+    color: white;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    width: fit-content;
+    height: auto;
 }
+
+.boton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(129, 140, 248, 0.6);
+    filter: brightness(1.1);
+}
+
+.boton:active {
+    transform: translateY(0);
+}

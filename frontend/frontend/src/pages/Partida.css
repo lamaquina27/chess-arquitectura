@@ -1,42 +1,92 @@
 .partida-container {
-    background-color: black;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 50px 20px;
-    color: rgb(255, 255, 255);
+    padding: 60px 20px;
     min-height: 100vh;
+    gap: 40px;
+}
+
+.partida-container h1 {
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
 }
 
 .info-panel {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 10px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 24px 40px;
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+    display: flex;
+    gap: 40px;
+    box-shadow: var(--shadow-premium);
     margin-bottom: 20px;
-    text-align: center;
+    animation: slideUp 0.6s ease-out;
 }
 
-/* --- Wrapper del tablero con coordenadas --- */
+.info-panel p {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+}
+
+.info-panel b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.turno {
+    position: relative;
+    padding-left: 20px;
+}
+
+.turno::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-gold);
+    animation: pulse 2s infinite;
+}
+
+/* --- Tablero --- */
 .tablero-wrapper {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-premium);
+    animation: fadeIn 0.8s ease-out;
 }
 
 .coordenadas-filas {
     display: flex;
     flex-direction: column;
-    margin-right: 6px;
+    margin-right: 12px;
+}
+
+.coordenada-fila, .coordenada-col {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
 }
 
 .coordenada-fila {
-    width: 24px;
-    height: 80px;
+    height: 70px; /* Reduced from 80px for a more compact board */
+    width: 20px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    font-size: 1rem;
-    font-weight: bold;
-    color: #ccc;
+    justify-content: center;
 }
 
 .tablero-inner {
@@ -46,85 +96,99 @@
 
 .tablero {
     display: grid;
-    grid-template-columns: repeat(8, 80px);
-    border: 5px solid #444;
-    border-radius: 5px;
+    grid-template-columns: repeat(8, 70px);
+    border: 8px solid #1e293b;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+
+.celda {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    position: relative;
+}
+
+.celda-clara { background-color: #c0b6b6; color: #505050; }
+.celda-oscura { background-color: #6d4c41; color: #f8fafc; }
+
+.celda:hover {
+    filter: brightness(1.1);
+    z-index: 5;
+}
+
+.celda-seleccionada {
+    background-color: rgba(251, 191, 36, 0.4) !important;
+    box-shadow: inset 0 0 0 4px var(--accent-gold);
+}
+
+/* --- Piezas --- */
+.pieza-blanca {
+    color: #ffffff;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transition: transform 0.2s ease;
+}
+
+.pieza-negra {
+    color: #0f172a;
+    filter: drop-shadow(0 2px 4px rgba(255,255,255,0.1));
+    transition: transform 0.2s ease;
+}
+
+.celda:active .pieza-blanca, .celda:active .pieza-negra {
+    transform: scale(0.9);
 }
 
 .coordenadas-columnas {
     display: flex;
-    margin-top: 6px;
-    margin-left: 5px;
+    margin-top: 12px;
 }
 
 .coordenada-col {
-    width: 80px;
-    height: 24px;
+    width: 70px;
     display: flex;
     justify-content: center;
-    align-items: center;
-    font-size: 1rem;
-    font-weight: bold;
-    color: #ccc;
 }
 
-.celda {
-    width: 80px;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 3.5rem;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.15s ease;
-}
-
-.celda:hover {
-    filter: brightness(1.15);
-}
-
-.celda-clara {
-    background-color: #f0d9b5;
-}
-
-.celda-oscura {
-    background-color: #b58863;
-}
-
-/* --- Estilos para las piezas --- */
-.pieza-blanca {
-    color: #ffffff;
-    -webkit-text-stroke: 1.5px #616161;
-    text-shadow: 0px 3px 4px rgba(255, 255, 255, 0.4);
-}
-
-.pieza-negra {
-    color: #111111;
-    -webkit-text-stroke: 1px #616161;
-    text-shadow: 0px 3px 4px rgba(0, 0, 0, 0.6);
-}
-
-/* --- Estado: Celda seleccionada --- */
-.celda-seleccionada {
-    outline: 4px solid #ffeb3b;
-    outline-offset: -4px;
-    z-index: 10;
-    background-color: rgba(255, 235, 59, 0.4) !important;
-}
-
+/* --- Opciones --- */
 .opciones {
     margin-top: 20px;
+    width: 100%;
     display: flex;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    width: 50%;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; transform: translateY(-50%) scale(1); }
+    50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
+    100% { opacity: 0.6; transform: translateY(-50%) scale(1); }
 }
 
 .loading {
-    color: white;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.5rem;
-    text-align: center;
-    padding: 100px;
+    letter-spacing: 0.1em;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    animation: pulse 1.5s infinite;
 }

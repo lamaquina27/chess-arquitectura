@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 function PopupPerdida(){
     const navigate = useNavigate()
     const metodos = async () => {
-        navigate("/")
+        navigate("/inicio")
     };
     return(
         <>

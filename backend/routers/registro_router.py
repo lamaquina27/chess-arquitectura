@@ -48,9 +48,12 @@ def registro(user:Usuario):
     # id = generate_id()
     userdb = UsuarioDB(email=user.email,hashed_password=password)
     users[user.username]=userdb
+    access_token = crear_token(data={"sub":user.username})
     return {
         "mensaje":"se ha creado el usuario exitosamente",
-        "email_usuario":user.email
+        "email_usuario":user.email,
+        "access_token":access_token,
+        "token_type":"bearer"
     }
 
 

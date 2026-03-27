@@ -8,6 +8,7 @@ export async function registro(correo,username,password){
         body: JSON.stringify({"username":username,"email":correo,"password":password})
     })
     const data = await response.json();
+    localStorage.setItem("token", data.access_token)
     console.log(data)
     return data
 
