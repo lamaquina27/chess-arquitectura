@@ -1,5 +1,6 @@
+from routers.registro_router import usuario_actual
 from services.partida_service import abandono_partida, iniciar_partida, mover_pieza
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
 from pydantic import BaseModel
 
 
@@ -13,7 +14,7 @@ class Movimiento(BaseModel):
 partidas=[]
 
 
-@router.post("/iniciar")
+@router.post("/iniciar",dependencies=[Depends(usuario_actual)])
 def iniciar():
     partida = iniciar_partida()
     partidas.append(partida)

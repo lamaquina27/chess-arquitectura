@@ -88,15 +88,18 @@ def autenticar_usuario(username:str,password:str):
 
 
 async def usuario_actual(token : str =Depends(oauth)):
-    payload = decodificar_token(token)
-    usuario = payload.get("sub")
-    print("holaaaa",usuario)
-    if usuario is None:
+    try:
+        payload = decodificar_token(token)
+        usuario = payload.get("sub")
+        print("holaaaa",usuario)
+        if usuario is None:
+            raise HTTPException(status_code=401,detail="credenciales invalidas")
+        user = obtener_usuario(users,usuario)
+        if user is None:
+            raise HTTPException(status_code=401,detail="usuario no encontrado")
+        return user
+    except Exception as e:
         raise HTTPException(status_code=401,detail="credenciales invalidas")
-    user = obtener_usuario(users,usuario)
-    if user is None:
-        raise HTTPException(status_code=401,detail="usuario no encontrado")
-    return user
 
 
 

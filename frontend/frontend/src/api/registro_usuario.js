@@ -1,4 +1,5 @@
 export async function registro(correo,username,password){
+    
     const response = await fetch("http://localhost:8000/api/usuario/registro",{
         method:"POST",
         headers: {

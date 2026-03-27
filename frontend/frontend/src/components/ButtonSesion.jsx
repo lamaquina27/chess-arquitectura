@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 
-
 function ButtonSesion(props){
     const navigate = useNavigate()
     const texto = props.tipo == "sesion" ? "Inicia sesion" : "Aun no estas registrado?" 

@@ -2,6 +2,8 @@ import { useState } from "react"
 import { useEffect } from "react"
 import { moverPieza } from "../api/mover_pieza"
 import { iniciarPartida } from "../api/iniciar_partida"
+import { useNavigate } from "react-router-dom";
+
 import "./Partida.css"
 import Button from "../components/Button"
 
@@ -39,15 +41,21 @@ function crearTableroInicial() {
 function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
     const [tablero, setTablero] = useState(() => crearTableroInicial())
-    const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) // Casilla algebraica: "e2"
+    const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) 
     const[turno,setTurno]=useState("")
+    const navigate = useNavigate()
     useEffect(() => {
-        //Estado para inciiar la partida
-        iniciarPartida().then(data=>{
+            const cargar = async () => {
+            const data = await iniciarPartida()
+            if (data.error) {
+                alert("No estás autorizado")
+                navigate("/")
+                return
+            }
             setInfoPartida(data)
             setTurno(data.turno)
-            
-        })
+        }
+        cargar()
     }, [])
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
