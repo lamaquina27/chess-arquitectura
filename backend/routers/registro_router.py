@@ -63,7 +63,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     usuario = autenticar_usuario(form_data.username,form_data.password)
     if not usuario:
         raise HTTPException(status_code=401,detail="Usuario o contrasena incorrectos")
-
+    
     access_token = crear_token(data={"sub":form_data.username})
     
     return {
@@ -83,7 +83,7 @@ def obtener_usuario(db,username:str):
 def autenticar_usuario(username:str,password:str):
     usuario = obtener_usuario(users,username)
     if not usuario or not verificar_password(password,usuario.hashed_password):
-        return {"mensaje":"no tienes licencia"}
+        raise HTTPException(status_code=404,detail="Usuario o contrasena incorrectos")
     return usuario
 
 
@@ -91,7 +91,7 @@ async def usuario_actual(token : str =Depends(oauth)):
     try:
         payload = decodificar_token(token)
         usuario = payload.get("sub")
-        print("holaaaa",usuario)
+        
         if usuario is None:
             raise HTTPException(status_code=401,detail="credenciales invalidas")
         user = obtener_usuario(users,usuario)
