@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { use, useState } from "react"
 import { useEffect } from "react"
 import { moverPieza } from "../api/mover_pieza"
 import { iniciarPartida } from "../api/iniciar_partida"
@@ -42,6 +42,7 @@ function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
     const [tablero, setTablero] = useState(() => crearTableroInicial())
     const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) 
+    const [idPartida,setIdPartida] = useState(null)
     const[turno,setTurno]=useState("")
     const navigate = useNavigate()
     useEffect(() => {
@@ -53,7 +54,10 @@ function Partida() {
                 return
             }
             setInfoPartida(data)
+            
             setTurno(data.turno)
+            setIdPartida(data.id_partida)
+            
         }
         cargar()
     }, [])
@@ -66,6 +70,12 @@ function Partida() {
         // Fase 1: Seleccionar origen
         if (!celdaSeleccionada) {
             if (pieza !== '') {
+                const esMayuscula = pieza === pieza.toUpperCase();
+                const colorPieza = esMayuscula ? "blanco" : "negro";
+                if (colorPieza !== turno) {
+                    alert(`No es tu turno. Turno de las ${turno}s`);
+                    return; // Bloqueamos la selección
+                }
                 setCeldaSeleccionada(casilla)
             }
         }
@@ -89,7 +99,7 @@ function Partida() {
             })
 
             // Enviar movimiento al backend
-            moverPieza(celdaSeleccionada, casilla, piezaMovida)
+            moverPieza(celdaSeleccionada, casilla, piezaMovida,idPartida)
             setTurno(turno === "blanco" ? "negro" : "blanco")
             setCeldaSeleccionada(null)
         }
@@ -133,7 +143,7 @@ function Partida() {
                                 const colorClase = isClara ? "celda-clara" : "celda-oscura"
 
                                 const esBlanca = celda !== '' && celda === celda.toUpperCase()
-                                const clasePieza = celda !== '' ? (esBlanca ? "pieza-negra" : "pieza-blanca") : ""
+                                const clasePieza = celda !== '' ? (esBlanca ? "pieza-blanca" : "pieza-negra") : ""
 
                                 const isSeleccionada = celdaSeleccionada === casilla
                                 const claseSeleccionada = isSeleccionada ? "celda-seleccionada" : ""

@@ -2,7 +2,9 @@
 import bcrypt
 
 
-
+def generar_id(id:int):
+    id+=1
+    return id
 def password_to_hash(password:str):
     sal = bcrypt.gensalt()
 

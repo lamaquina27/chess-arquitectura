@@ -1,3 +1,4 @@
+from services.registro_service import generar_id
 from services.sesion_service import crear_token
 from os import access
 from services.sesion_service import decodificar_token
@@ -16,7 +17,8 @@ class Usuario(BaseModel):
     password:str
 
 class UsuarioDB(BaseModel):
-    
+    id:int
+    username: str
     email: str
     hashed_password: str
 
@@ -26,7 +28,7 @@ class Token(BaseModel):
 
 users={}
 
-
+id = 0
 router = APIRouter()
 oauth=OAuth2PasswordBearer(tokenUrl="api/token")
 
@@ -42,16 +44,18 @@ def registro(user:Usuario):
         return {
             "mensaje":"Ya existe un usuario con ese correo"
         }
-    
+    global id
+    newId=generar_id(id)
+    id = newId
     password = password_to_hash(user.password)
     
     # id = generate_id()
-    userdb = UsuarioDB(email=user.email,hashed_password=password)
+    userdb = UsuarioDB(username=user.username,id=newId,email=user.email,hashed_password=password)
     users[user.username]=userdb
     access_token = crear_token(data={"sub":user.username})
     return {
         "mensaje":"se ha creado el usuario exitosamente",
-        "email_usuario":user.email,
+        "id_usuario":newId,
         "access_token":access_token,
         "token_type":"bearer"
     }
