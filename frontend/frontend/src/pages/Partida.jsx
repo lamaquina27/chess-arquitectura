@@ -41,12 +41,12 @@ function crearTableroInicial() {
 function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
     const [tablero, setTablero] = useState(() => crearTableroInicial())
-    const [celdaSeleccionada, setCeldaSeleccionada] = useState(null) 
-    const [idPartida,setIdPartida] = useState(null)
-    const[turno,setTurno]=useState("")
+    const [celdaSeleccionada, setCeldaSeleccionada] = useState(null)
+    const [idPartida, setIdPartida] = useState(null)
+    const [turno, setTurno] = useState("")
     const navigate = useNavigate()
     useEffect(() => {
-            const cargar = async () => {
+        const cargar = async () => {
             const data = await iniciarPartida()
             if (data.error) {
                 alert("No estás autorizado")
@@ -54,10 +54,10 @@ function Partida() {
                 return
             }
             setInfoPartida(data)
-            
+
             setTurno(data.turno)
             setIdPartida(data.id_partida)
-            
+
         }
         cargar()
     }, [])
@@ -99,13 +99,13 @@ function Partida() {
             })
 
             // Enviar movimiento al backend
-            moverPieza(celdaSeleccionada, casilla, piezaMovida,idPartida)
+            moverPieza(celdaSeleccionada, casilla, piezaMovida, idPartida)
             setTurno(turno === "blanco" ? "negro" : "blanco")
             setCeldaSeleccionada(null)
         }
     }
 
-    
+
 
     // Símbolos Unicode para las piezas
     const piezasDict = {
@@ -173,7 +173,7 @@ function Partida() {
 
 
             <div className="opciones">
-                <Button funcion='abandonar'></Button>
+                <Button funcion='abandonar' idPartida={idPartida}></Button>
             </div>
         </div>
     )

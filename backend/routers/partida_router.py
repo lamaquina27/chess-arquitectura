@@ -28,20 +28,22 @@ def iniciar(user = Depends(usuario_actual)):
         "id_partida":partida.id
     }
 
+class AbandonoData(BaseModel):
+    id_partida: int
+
 @router.post("/abandono")
-def abandono():
-    partida = partidas[0]
+def abandono(datos: AbandonoData):
+    partida = partidas.get(datos.id_partida)
+    
     if not partida:
-        return{
-            "error":"partida no encontrada"
-        }
+        raise HTTPException(status_code=404, detail="partida no encontrada")
        
-    partida = abandono_partida("Negro",partida)
+    partida = abandono_partida("Negro", partida)
     
     return {
         "jugador_blanco": partida.jugador_blanco,
         "jugador_negro": partida.jugador_negro,
-        "ganador ": partida.ganador
+        "ganador": partida.ganador
     }
 
 @router.post("/mover")

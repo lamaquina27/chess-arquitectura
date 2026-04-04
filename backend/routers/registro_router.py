@@ -21,6 +21,7 @@ class UsuarioDB(BaseModel):
     username: str
     email: str
     hashed_password: str
+    elo:int
 
 class Token(BaseModel):
     access_token:str
@@ -50,7 +51,7 @@ def registro(user:Usuario):
     password = password_to_hash(user.password)
     
     # id = generate_id()
-    userdb = UsuarioDB(username=user.username,id=newId,email=user.email,hashed_password=password)
+    userdb = UsuarioDB(username=user.username,id=newId,email=user.email,hashed_password=password,elo=1000)
     users[user.username]=userdb
     access_token = crear_token(data={"sub":user.username})
     return {
@@ -59,9 +60,6 @@ def registro(user:Usuario):
         "access_token":access_token,
         "token_type":"bearer"
     }
-
-
-
 
 
 @router.post("/token",response_model=Token)
@@ -109,5 +107,11 @@ async def usuario_actual(token : str =Depends(oauth)):
         raise HTTPException(status_code=401,detail="credenciales invalidas")
 
 
-
+@router.get("/usuario/perfil")
+def obtener_perfil(user = Depends(usuario_actual)):
+    return {
+        "username": user.username,
+        "elo": user.elo,
+        "id_usuario": user.id
+    }
 

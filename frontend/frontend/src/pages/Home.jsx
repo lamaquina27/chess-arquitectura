@@ -1,18 +1,19 @@
 import './Home.css'
 import Button from '../components/Button'
-function Home(){
-    return(
+function Home() {
+    return (
 
         <>
             <div className='main'>
                 <div className='cont'>
-                <h1>
-                    Bienvenidos a cheesse
-                </h1>
-                <Button funcion="iniciar"></Button>
+                    <h1>
+                        Bienvenidos a cheesse
+                    </h1>
+                    <Button funcion="iniciar"></Button>
+                    <Button funcion="perfil"></Button>
                 </div>
             </div>
-    
+
         </>
     )
 
