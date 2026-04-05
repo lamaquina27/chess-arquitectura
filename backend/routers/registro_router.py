@@ -85,6 +85,12 @@ def obtener_usuario(db,username:str):
     if usuariodb:
         return usuariodb
 
+def actualizar_elo(username: str, cantidad: int):
+    # Usamos la función que ya tenías escrita para buscar al perfil
+    usuario = obtener_usuario(users, username)
+    if usuario:
+        usuario.elo += cantidad
+
 def autenticar_usuario(username:str,password:str):
     usuario = obtener_usuario(users,username)
     if not usuario or not verificar_password(password,usuario.hashed_password):

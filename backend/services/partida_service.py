@@ -2,19 +2,21 @@ from services.registro_service import generar_id
 from models.partida import Partida
 
 id = 0
-def iniciar_partida(usuario):
+# Le decimos que por defecto el enemigo será "Invitado" si jugamos solos
+def iniciar_partida(usuario, nombre_jugador_negro="Invitado"):
     global id
     newId = generar_id(id)
     
     id = newId
     partida = Partida(
         jugador_blanco= usuario.username,
-        jugador_negro= "usuario.username",
+        # Ya no usamos un texto quemado, usamos el parámetro que llegó:
+        jugador_negro= nombre_jugador_negro, 
         id=newId,
         jugador_actual=usuario.username
-
     )
     return partida
+
 
 def abandono_partida(ganador,partida):
     partida.ganador=ganador

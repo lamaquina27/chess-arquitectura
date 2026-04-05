@@ -2,7 +2,7 @@ import { use, useState } from "react"
 import { useEffect } from "react"
 import { moverPieza } from "../api/mover_pieza"
 import { iniciarPartida } from "../api/iniciar_partida"
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import "./Partida.css"
 import Button from "../components/Button"
@@ -45,22 +45,31 @@ function Partida() {
     const [idPartida, setIdPartida] = useState(null)
     const [turno, setTurno] = useState("")
     const navigate = useNavigate()
+    const location = useLocation()
     useEffect(() => {
         const cargar = async () => {
-            const data = await iniciarPartida()
-            if (data.error) {
-                alert("No estás autorizado")
-                navigate("/")
-                return
+            // Averiguamos si venimos del modo Multijugador (el Popup)
+            if (location.state && location.state.partidaData) {
+                const dataPrecargada = location.state.partidaData;
+                setInfoPartida(dataPrecargada);
+                setTurno(dataPrecargada.turno);
+                setIdPartida(dataPrecargada.id_partida);
+            } else {
+                // Si la mochila viene vacía, arrancamos la Partida Práctica por defecto
+                const data = await iniciarPartida();
+                if (data.error) {
+                    alert("No estás autorizado");
+                    navigate("/");
+                    return;
+                }
+                setInfoPartida(data);
+                setTurno(data.turno);
+                setIdPartida(data.id_partida);
             }
-            setInfoPartida(data)
-
-            setTurno(data.turno)
-            setIdPartida(data.id_partida)
-
         }
-        cargar()
-    }, [])
+        cargar();
+    }, [location.state, navigate]); // React nos pide anotar qué dependencias estamos usando
+
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
 
