@@ -1,3 +1,6 @@
+from database import get_db
+from sqlalchemy.orm import Session
+
 from routers.registro_router import usuario_actual, actualizar_elo, autenticar_usuario
 from services.partida_service import abandono_partida, iniciar_partida, mover_pieza
 from fastapi import APIRouter,Depends,HTTPException
@@ -35,13 +38,14 @@ class AbandonoData(BaseModel):
     id_partida: int
 
 @router.post("/iniciar_multijugador")
-def iniciar_multijugador(datos_rival: CredencialesRival, user = Depends(usuario_actual)):
+def iniciar_multijugador(datos_rival: CredencialesRival, user = Depends(usuario_actual),db: Session = Depends(get_db)):
     # 1. Comprobamos que el Jugador 2 de verdad existe y su clave es correcta
     try:
-        rival = autenticar_usuario(datos_rival.username, datos_rival.password)
+        rival = autenticar_usuario(datos_rival.username, datos_rival.password,db)
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=401, detail="Las credenciales del rival son incorrectas.")
-
+    
     if user.username == rival.username:
          raise HTTPException(status_code=400, detail="¡No puedes jugar contra ti mismo!")
     
@@ -58,7 +62,7 @@ def iniciar_multijugador(datos_rival: CredencialesRival, user = Depends(usuario_
     }
 
 @router.post("/abandono")
-def abandono(datos: AbandonoData, user = Depends(usuario_actual)):
+def abandono(datos: AbandonoData, user = Depends(usuario_actual),db: Session = Depends(get_db)):
     partida = partidas.get(datos.id_partida)
     
     if not partida:
@@ -83,8 +87,8 @@ def abandono(datos: AbandonoData, user = Depends(usuario_actual)):
     partida = abandono_partida(ganador_username, partida)
 
         # 4. Actualizamos ambos ELOs en la base de datos simulada
-    actualizar_elo(perdedor_username, -10) # Pierde 10 puntos por rendirse
-    actualizar_elo(ganador_username, 10)   # Gana 10 puntos por la victoria
+    actualizar_elo(perdedor_username, -10,db) # Pierde 10 puntos por rendirse
+    actualizar_elo(ganador_username, 10,db)   # Gana 10 puntos por la victoria
     
     return {
         "jugador_blanco": partida.jugador_blanco,
