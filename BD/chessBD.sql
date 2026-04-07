@@ -40,11 +40,11 @@ CREATE TABLE estadisticas (
 CREATE TABLE partida (
     id CHAR(36) PRIMARY KEY,
     jugador_blancas CHAR(36) NOT NULL,
-    jugador_negras CHAR(36) NOT NULL,
+    jugador_negras CHAR(36) NULL,
     
-    estado ENUM('pendiente', 'en_juego', 'finalizada') DEFAULT 'pendiente',
+    jugador_actual CHAR(36)  NULL,
     ganador CHAR(36) NULL,
-    
+    turno CHAR(36) NOT NULL,    
     fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_fin TIMESTAMP NULL,
 
@@ -64,7 +64,7 @@ CREATE TABLE movimiento (
     
     pieza VARCHAR(20),
     casilla_inicio VARCHAR(5),
-    casilla_destino VARCHAR(5),
+    casilla_llegada VARCHAR(5),
     
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
