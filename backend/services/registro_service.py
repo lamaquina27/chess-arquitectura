@@ -1,10 +1,9 @@
 
 import bcrypt
+import uuid
 
-
-def generar_id(id:int):
-    id+=1
-    return id
+def generar_id(id=None):
+    return str(uuid.uuid4())
 def password_to_hash(password:str):
     sal = bcrypt.gensalt()
 

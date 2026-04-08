@@ -3,14 +3,12 @@ from models import movimiento
 from services.registro_service import generar_id
 from models.partida import Partida
 
-id = 0
-id_movimiento=0
+
 # Le decimos que por defecto el enemigo será "Invitado" si jugamos solos
 def iniciar_partida(usuario, id_jugador_negro=None):
-    global id
-    newId = generar_id(id)
-    
-    id = newId
+
+    newId = generar_id()
+
     partida = Partida(
         jugador_blancas= usuario.id,
         jugador_negras= id_jugador_negro, 
@@ -25,16 +23,15 @@ def iniciar_partida(usuario, id_jugador_negro=None):
 #     partida.ganador=ganador
 #     return partida
 
-def mover_pieza(partida, casilla_inicio: str, casilla_llegada: str, pieza: str):
+def mover_pieza(partida, casilla_inicio: str, casilla_llegada: str, pieza: str, numero_movimiento: int):
     # Registrar el movimiento (para futuras validaciones)
-    global id_movimiento
-    newId = generar_id(id_movimiento)
+   
+    newId = generar_id()
     
-    id_movimiento = newId
     movimiento = Movimiento(
         id=newId,
         partida_id = partida.id,
-        numero_movimiento = newId,
+        numero_movimiento = numero_movimiento,
         pieza = pieza,
         casilla_inicio = casilla_inicio,
         casilla_llegada = casilla_llegada

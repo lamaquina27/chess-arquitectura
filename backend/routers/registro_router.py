@@ -30,13 +30,10 @@ class Token(BaseModel):
 
 
 
-id = 0
 router = APIRouter()
 oauth=OAuth2PasswordBearer(tokenUrl="api/token")
 
-@router.get("/users")
-def listar():
-    return users
+
 
 
 @router.post("/usuario/registro")
@@ -44,9 +41,9 @@ def registro(user:Usuario,db: Session = Depends(get_db)):
     existe_usuario = db.query(USERDB).filter(USERDB.username == user.username).first()
     if existe_usuario:
         raise HTTPException(status_code=400, detail="El nombre de usuario ya existe")
-    global id
+    
     newId=generar_id(id)
-    id = newId
+    
     password = password_to_hash(user.password)
     
     # 3. Crear la instancia del modelo ORM
@@ -65,7 +62,7 @@ def registro(user:Usuario,db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Error al guardar en la base de datos")
-    access_token = crear_token(data={"sub":user.username})
+    access_token = crear_token(data={"sub": newId})
     return {
         "mensaje":"se ha creado el usuario exitosamente",
         "id_usuario":newId,
@@ -76,12 +73,15 @@ def registro(user:Usuario,db: Session = Depends(get_db)):
 
 @router.post("/token",response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),db: Session = Depends(get_db)):
-    
-    usuario = autenticar_usuario(form_data.username,form_data.password,db)
+    userdb= db.query(USERDB).filter(USERDB.username == form_data.username).first()
+    if not userdb:
+        raise HTTPException(status_code=401,detail="Usuario o contrasena incorrectos")
+        
+    usuario = autenticar_usuario(userdb.id,form_data.password,db)
     if not usuario:
         raise HTTPException(status_code=401,detail="Usuario o contrasena incorrectos")
     
-    access_token = crear_token(data={"sub":form_data.username})
+    access_token = crear_token(data={"sub": usuario.id})
     
     return {
         "access_token":access_token,
@@ -91,21 +91,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),db: Session = D
 # def generate_id():
 #     return str(uuid.uuid4())
 
-def obtener_usuario(db,username:str):
+def obtener_usuario(db,user_id:str):
     
-    usuariodb = db.query(USERDB).filter(USERDB.username == username).first()
+    usuariodb = db.query(USERDB).filter(USERDB.id == user_id).first()
     if usuariodb:
         return usuariodb
 
-def actualizar_elo(username: str, cantidad: int,db):
+def actualizar_elo(user_id: str, cantidad: int,db):
     # Usamos la función que ya tenías escrita para buscar al perfil
-    usuario = obtener_usuario(db, username)
+    usuario = obtener_usuario(db, user_id)
     if usuario:
         usuario.elo += cantidad
         db.commit()
 
-def autenticar_usuario(username:str,password:str,db):
-    usuario = obtener_usuario(db,username)
+def autenticar_usuario(user_id:str,password:str,db):
+    usuario = obtener_usuario(db,user_id)
     if not usuario or not verificar_password(password,usuario.password_hash):
         raise HTTPException(status_code=404,detail="Usuario o contrasena incorrectos")
     return usuario

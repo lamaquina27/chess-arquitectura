@@ -2,6 +2,8 @@
 from models.partida import Partida
 from database import get_db
 from sqlalchemy.orm import Session
+from models.usuario import UsuarioDB as UsuarioEntity
+from models.movimiento import Movimiento as MovimientoDB
 
 from routers.registro_router import usuario_actual, actualizar_elo, autenticar_usuario
 from services.partida_service import  iniciar_partida, mover_pieza
@@ -15,7 +17,7 @@ class Movimiento(BaseModel):
     casilla_inicio: str
     casilla_llegada: str
     pieza: str
-    id_partida:int
+    id_partida:str
 
 class CredencialesRival(BaseModel):
     username: str
@@ -39,13 +41,14 @@ def iniciar(user = Depends(usuario_actual),db: Session = Depends(get_db)):
     }
 
 class AbandonoData(BaseModel):
-    id_partida: int
+    id_partida: str
 
 @router.post("/iniciar_multijugador")
 def iniciar_multijugador(datos_rival: CredencialesRival, user = Depends(usuario_actual),db: Session = Depends(get_db)):
     # 1. Comprobamos que el Jugador 2 de verdad existe y su clave es correcta
     try:
-        rival = autenticar_usuario(datos_rival.username, datos_rival.password,db)
+        rivaldb = db.query(UsuarioEntity).filter(UsuarioEntity.username == datos_rival.username).first()
+        rival = autenticar_usuario(rivaldb.id, datos_rival.password,db)
     except Exception as e:
         print(e)
         raise HTTPException(status_code=401, detail="Las credenciales del rival son incorrectas.")
@@ -105,7 +108,6 @@ def abandono(datos: AbandonoData, user = Depends(usuario_actual),db: Session = D
 @router.post("/mover")
 def mover(movimiento: Movimiento, user = Depends(usuario_actual),db: Session = Depends(get_db)):
     partida = db.query(Partida).filter(Partida.id == movimiento.id_partida).first()
-    print(partida)
     if not partida:
         raise HTTPException(
             status_code=404, 
@@ -119,12 +121,16 @@ def mover(movimiento: Movimiento, user = Depends(usuario_actual),db: Session = D
             status_code=403, 
             detail="No es tu turno, espera a que mueva tu oponente."
         )
+    
+    # Calculamos qué número de movimiento es (contando cuántos hay guardados + 1)
+    numero_mov = db.query(MovimientoDB).filter(MovimientoDB.partida_id == partida.id).count() + 1
+    
     partida,movimiento = mover_pieza(
         partida=partida,
         casilla_inicio=movimiento.casilla_inicio,
         casilla_llegada=movimiento.casilla_llegada,
         pieza=movimiento.pieza,
-        
+        numero_movimiento=numero_mov
     )
     db.add(movimiento)
     db.commit()
