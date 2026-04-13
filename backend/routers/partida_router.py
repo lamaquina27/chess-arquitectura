@@ -1,68 +1,21 @@
-
-from models.partida import Partida
-from database import get_db
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models.usuario import UsuarioDB as UsuarioEntity
-from models.movimiento import Movimiento as MovimientoDB
 
-from routers.registro_router import usuario_actual, actualizar_elo, autenticar_usuario
-from services.partida_service import  iniciar_partida, mover_pieza
-from fastapi import APIRouter,Depends,HTTPException
-from pydantic import BaseModel
+from database import get_db
+from schemas import MovimientoRequest, CredencialesRival, AbandonoData
+from services.partida_service import iniciar_partida, mover_pieza, abandonar_partida
+from services.auth_service import autenticar_usuario
+from repositories import usuario_repository, partida_repository, movimiento_repository
+from routers.registro_router import usuario_actual
 
 
 router = APIRouter()
 
-class Movimiento(BaseModel):
-    casilla_inicio: str
-    casilla_llegada: str
-    pieza: str
-    id_partida:str
-
-class CredencialesRival(BaseModel):
-    username: str
-    password: str
-
-partidas={}
-
 
 @router.get("/iniciar")
-def iniciar(user = Depends(usuario_actual),db: Session = Depends(get_db)):
-    partida = iniciar_partida(user)
-    db.add(partida)
-    db.commit()
-    db.refresh(partida)
+def iniciar(user=Depends(usuario_actual), db: Session = Depends(get_db)):
+    partida = iniciar_partida(db, user)
 
-    return {
-        "jugador_blanco": partida.jugador_blancas,
-        "jugador_negro": partida.jugador_negras,
-        "turno": partida.turno,
-        "id_partida":partida.id
-    }
-
-class AbandonoData(BaseModel):
-    id_partida: str
-
-@router.post("/iniciar_multijugador")
-def iniciar_multijugador(datos_rival: CredencialesRival, user = Depends(usuario_actual),db: Session = Depends(get_db)):
-    # 1. Comprobamos que el Jugador 2 de verdad existe y su clave es correcta
-    try:
-        rivaldb = db.query(UsuarioEntity).filter(UsuarioEntity.username == datos_rival.username).first()
-        rival = autenticar_usuario(rivaldb.id, datos_rival.password,db)
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=401, detail="Las credenciales del rival son incorrectas.")
-    
-    if user.username == rival.username:
-         raise HTTPException(status_code=400, detail="¡No puedes jugar contra ti mismo!")
-    
-    # 2. Fabricamos la partida, pero ahora enviamos ambos nombres 
-    partida = iniciar_partida(user, rival.id)
-    db.add(partida)
-    db.commit()
-    db.refresh(partida)
-
-    # 3. Devolvemos los datos al frontend para que dibuje el tablero
     return {
         "jugador_blanco": partida.jugador_blancas,
         "jugador_negro": partida.jugador_negras,
@@ -70,75 +23,68 @@ def iniciar_multijugador(datos_rival: CredencialesRival, user = Depends(usuario_
         "id_partida": partida.id
     }
 
+
+@router.post("/iniciar_multijugador")
+def iniciar_multijugador(datos_rival: CredencialesRival, user=Depends(usuario_actual), db: Session = Depends(get_db)):
+    try:
+        rivaldb = usuario_repository.obtener_por_username(db, datos_rival.username)
+        rival = autenticar_usuario(rivaldb.id, datos_rival.password, db)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Las credenciales del rival son incorrectas.")
+
+    if user.username == rival.username:
+        raise HTTPException(status_code=400, detail="¡No puedes jugar contra ti mismo!")
+
+    partida = iniciar_partida(db, user, rival.id)
+
+    return {
+        "jugador_blanco": partida.jugador_blancas,
+        "jugador_negro": partida.jugador_negras,
+        "turno": partida.turno,
+        "id_partida": partida.id
+    }
+
+
 @router.post("/abandono")
-def abandono(datos: AbandonoData, user = Depends(usuario_actual),db: Session = Depends(get_db)):
-    partida = db.query(Partida).filter(Partida.id == datos.id_partida).first()
-    
+def abandono(datos: AbandonoData, user=Depends(usuario_actual), db: Session = Depends(get_db)):
+    partida = partida_repository.obtener_por_id(db, datos.id_partida)
+
     if not partida:
         raise HTTPException(status_code=404, detail="partida no encontrada")
-       
-    # 1. Comprobamos si el usuario realmente está jugando en esta partida
-    # if user.username not in [partida.jugador_blancas, partida.jugador_negras]:
-    #     raise HTTPException(status_code=403, detail="No eres parte de esta partida")
 
-    # 2. Descubrimos quién se rinde basado del turno actual en el tablero
-    if partida.turno == "blanco":
-        # Si era el turno de las blancas y apretaron abandonar, el Blanco pierde
-        perdedor_id = partida.jugador_blancas
-        ganador_id = partida.jugador_negras
-    else:
-        # Si era el turno de las negras, el Negro pierde
-        perdedor_id = partida.jugador_negras
-        ganador_id = partida.jugador_blancas
+    partida = abandonar_partida(db, partida)
 
-
-    # 3. Asignamos al verdadero ganador en la partida
-    partida.ganador=ganador_id
-    db.commit()
-        # 4. Actualizamos ambos ELOs en la base de datos simulada
-    actualizar_elo(perdedor_id, -10,db) # Pierde 10 puntos por rendirse
-    actualizar_elo(ganador_id, 10,db)   # Gana 10 puntos por la victoria
-    
     return {
         "jugador_blanco": partida.jugador_blancas,
         "jugador_negro": partida.jugador_negras,
         "ganador": partida.ganador
     }
 
+
 @router.post("/mover")
-def mover(movimiento: Movimiento, user = Depends(usuario_actual),db: Session = Depends(get_db)):
-    partida = db.query(Partida).filter(Partida.id == movimiento.id_partida).first()
+def mover(movimiento: MovimientoRequest, user=Depends(usuario_actual), db: Session = Depends(get_db)):
+    partida = partida_repository.obtener_por_id(db, movimiento.id_partida)
     if not partida:
-        raise HTTPException(
-            status_code=404, 
-            detail="Partida No Encontrada."
-        )
-    
+        raise HTTPException(status_code=404, detail="Partida No Encontrada.")
+
     color_usuario = "blanco" if user.id == partida.jugador_actual else "negro"
-    print(user.username,partida.jugador_actual)
     if partida.turno != color_usuario:
-        raise HTTPException(
-            status_code=403, 
-            detail="No es tu turno, espera a que mueva tu oponente."
-        )
-    
-    # Calculamos qué número de movimiento es (contando cuántos hay guardados + 1)
-    numero_mov = db.query(MovimientoDB).filter(MovimientoDB.partida_id == partida.id).count() + 1
-    
-    partida,movimiento = mover_pieza(
+        raise HTTPException(status_code=403, detail="No es tu turno, espera a que mueva tu oponente.")
+
+    numero_mov = movimiento_repository.contar_por_partida(db, partida.id) + 1
+
+    partida, mov = mover_pieza(
+        db=db,
         partida=partida,
         casilla_inicio=movimiento.casilla_inicio,
         casilla_llegada=movimiento.casilla_llegada,
         pieza=movimiento.pieza,
         numero_movimiento=numero_mov
     )
-    db.add(movimiento)
-    db.commit()
 
-    
     return {
         "turno": partida.turno,
-        "casilla_inicio": movimiento.casilla_inicio,
-        "casilla_llegada": movimiento.casilla_llegada,
-        "pieza": movimiento.pieza
+        "casilla_inicio": mov.casilla_inicio,
+        "casilla_llegada": mov.casilla_llegada,
+        "pieza": mov.pieza
     }
