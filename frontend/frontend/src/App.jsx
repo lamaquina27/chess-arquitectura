@@ -7,6 +7,7 @@ import Sesion from './pages/Sesion.jsx';
 import Registro from './pages/registro.jsx';
 import Perfil from "./pages/Perfil.jsx";
 import Chat from './pages/Chat.jsx';
+import QRLoginMonitor from './components/QRLoginMonitor.jsx';
 function App() {
 
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/partida" element={<Partida />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/qr-login" element={<QRLoginMonitor />} />
       </Routes>
     </BrowserRouter>
   )

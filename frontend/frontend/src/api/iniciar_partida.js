@@ -1,7 +1,7 @@
 export async function iniciarPartida() {
 
   
-  const response = await fetch("http://localhost:8000/partida/iniciar", {
+  const response = await fetch(`http://${window.location.hostname}:8000/partida/iniciar`, {
     method: "GET",
     headers: {
       "Authorization": `Bearer ${localStorage.getItem("token")}`

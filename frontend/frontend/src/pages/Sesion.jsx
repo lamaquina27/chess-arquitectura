@@ -40,6 +40,16 @@ function Sesion() {
                         <ButtonSesion className="boton-inicio" tipo="sesion">Inicia sesion</ButtonSesion>
                     </form>
                     <ButtonSesion className="boton-registro" tipo="registro">Aun no estas registrado?</ButtonSesion>
+                    
+                    <div style={{marginTop: '20px', textAlign: 'center'}}>
+                        <button 
+                            type="button" 
+                            onClick={() => navigate('/qr-login')}
+                            style={{background: 'transparent', border: '1px solid white', color: 'white', padding: '10px', borderRadius: '5px', cursor: 'pointer'}}
+                        >
+                            Iniciar sesión con QR (Monitor)
+                        </button>
+                    </div>
                 </div>
 
 

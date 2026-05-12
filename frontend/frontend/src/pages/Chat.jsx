@@ -27,7 +27,7 @@ function Chat() {
         // Cargar historial de mensajes
         const cargarHistorial = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/mensajes/${datosPerfil.username}/${amigo}`);
+                const response = await fetch(`http://${window.location.hostname}:8000/mensajes/${datosPerfil.username}/${amigo}`);
                 if (response.ok) {
                     const data = await response.json();
                     // Transformar data a formato que usa el frontend {user, message}
@@ -44,7 +44,7 @@ function Chat() {
 
         cargarHistorial();
 
-        const ws = new WebSocket(`ws://localhost:8000/ws/${datosPerfil.username}/${amigo}`);
+        const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/${datosPerfil.username}/${amigo}`);
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             setMensajes((prev) => [...prev, data]);

@@ -7,6 +7,7 @@ import Chat_amigo from '../components/Chat_amigo';
 import { obtenerPendientes } from '../api/obtener_pendientes';
 import { aceptarSolicitud } from '../api/aceptar_solicitud';
 import { rechazarSolicitud } from '../api/rechazar_solicitud';
+import QRScannerMobile from '../components/QRScannerMobile';
 
 
 function Perfil() {
@@ -142,6 +143,8 @@ function Perfil() {
                         ))}
                     </div>
                 )}
+                {/* --- SECCIÓN NUEVA: ESCANEAR QR --- */}
+                <QRScannerMobile />
                 {/* ----------------------------------------------- */}
 
             <Chat_amigo miId={datosPerfil ? datosPerfil.id_usuario : null}></Chat_amigo>

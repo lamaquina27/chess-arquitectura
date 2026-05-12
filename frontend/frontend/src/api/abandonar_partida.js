@@ -3,7 +3,7 @@ export async function abandonarPartida(id_partida) {
   // 1. Sacamos el token de la memoria del navegador
   const token = localStorage.getItem("token");
 
-  const response = await fetch("http://localhost:8000/partida/abandono", {
+  const response = await fetch(`http://${window.location.hostname}:8000/partida/abandono`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
