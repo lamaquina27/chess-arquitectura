@@ -14,13 +14,19 @@ function QRScannerMobile() {
         try {
             const codeReader = new BrowserQRCodeReader();
             const videoInputDevices = await BrowserQRCodeReader.listVideoInputDevices();
-            
-            // Preferimos la cámara trasera en móviles
-            const selectedDeviceId = videoInputDevices.length > 1 ? videoInputDevices[1].deviceId : videoInputDevices[0].deviceId;
 
+            if (videoInputDevices.length === 0) {
+                setResultado("No se encontraron cámaras en este dispositivo.");
+                setEscaneando(false);
+                return;
+            }
+            // Seleccionamos la cámara (la última suele ser la trasera en móviles)
+            const selectedDeviceId = videoInputDevices.length > 1
+                ? videoInputDevices[videoInputDevices.length - 1].deviceId
+                : videoInputDevices[0].deviceId;
             controlsRef.current = await codeReader.decodeFromVideoDevice(
-                selectedDeviceId, 
-                videoRef.current, 
+                selectedDeviceId,
+                videoRef.current,
                 async (result, error, controls) => {
                     if (result) {
                         controls.stop();
@@ -47,7 +53,8 @@ function QRScannerMobile() {
             );
         } catch (error) {
             console.error(error);
-            setResultado("Error al acceder a la cámara");
+            // Esto nos dirá si es un problema de HTTPS (NotAllowedError o SecurityError)
+            setResultado(`Error: ${error.name} - ${error.message}`);
             setEscaneando(false);
         }
     };
@@ -71,7 +78,7 @@ function QRScannerMobile() {
     return (
         <div style={{ textAlign: 'center', padding: '20px', background: '#2c2c2c', borderRadius: '10px', marginTop: '20px' }}>
             <h3 style={{ color: 'white' }}>Escanear QR de Monitor</h3>
-            
+
             {escaneando ? (
                 <div>
                     <video ref={videoRef} style={{ width: '100%', maxWidth: '300px', borderRadius: '10px' }}></video>

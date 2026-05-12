@@ -1,5 +1,5 @@
 export async function aceptarSolicitud(idUsuario, idAmistad) {
-    const response = await fetch(`http://${window.location.hostname}:8000/amistad/aceptar`, {
+    const response = await fetch(`/amistad/aceptar`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

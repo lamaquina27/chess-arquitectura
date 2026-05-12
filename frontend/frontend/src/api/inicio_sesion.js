@@ -1,5 +1,5 @@
 export async function iniciarSesion(username, password) {
-    const response = await fetch("http://127.0.0.1:8000/api/token", {
+    const response = await fetch(`/api/token`, {
         method: "POST",
         body: new URLSearchParams({ "username": username, "password": password })
     })

@@ -1,5 +1,5 @@
 export async function enviarSolicitud(idUsuario, idAmistad) {
-    const response = await fetch(`http://${window.location.hostname}:8000/amistad/enviar`, {
+    const response = await fetch(`/amistad/enviar`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

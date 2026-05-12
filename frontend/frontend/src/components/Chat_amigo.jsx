@@ -14,7 +14,7 @@ function Chat_amigo({ miId }) {
         if (!miId) return;
 
         const cargarAmigos = async () => {
-            const response = await fetch(`http://${window.location.hostname}:8000/amistad/lista/${miId}`, {
+            const response = await fetch(`/amistad/lista/${miId}`, {
                 headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
             });
             if (response.ok) {

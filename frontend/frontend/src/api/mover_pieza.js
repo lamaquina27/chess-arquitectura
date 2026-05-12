@@ -1,5 +1,5 @@
 export async function moverPieza(casilla_inicio, casilla_llegada, pieza,id_partida) {
-  const response = await fetch(`http://${window.location.hostname}:8000/partida/mover`, {
+  const response = await fetch(`/partida/mover`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -22,7 +22,8 @@ function QRLoginMonitor() {
             setStatus("Escanea este QR desde tu celular para iniciar sesión");
 
             // Conectar al websocket usando el ID de la sala
-            ws = new WebSocket(`ws://${window.location.hostname}:8000/api/ws/qr/${data.sala}`);
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.hostname}:5173/api/ws/qr/${data.sala}`);
             
             ws.onmessage = (event) => {
                 const mensaje = JSON.parse(event.data);

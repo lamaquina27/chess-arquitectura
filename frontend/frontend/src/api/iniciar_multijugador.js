@@ -3,7 +3,7 @@ export async function iniciarMutijugador(username_enemigo, password_enemigo) {
     const token = localStorage.getItem("token");
 
     // Enviamos credenciales del enemigo y token del anfitrión
-    const response = await fetch(`http://${window.location.hostname}:8000/partida/iniciar_multijugador`, {
+    const response = await fetch(`/partida/iniciar_multijugador`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

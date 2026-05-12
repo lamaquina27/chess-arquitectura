@@ -1,5 +1,5 @@
 export async function rechazarSolicitud(idUsuario, idAmistad) {
-    const response = await fetch(`http://${window.location.hostname}:8000/amistad/rechazar`, {
+    const response = await fetch(`/amistad/rechazar`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
