@@ -48,3 +48,14 @@ def obtener_perfil(user=Depends(usuario_actual)):
         "elo": user.elo,
         "id_usuario": user.id
     }
+@router.get("/usuario/buscar/{username}")
+def buscar_usuario(username: str, db: Session = Depends(get_db)):
+    # Usamos la función que ya tienes en el repositorio de usuario
+    userdb = usuario_repository.obtener_por_username(db, username)
+    if not userdb:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    return {
+        "id": userdb.id,
+        "username": userdb.username
+    }

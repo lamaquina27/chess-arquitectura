@@ -1,0 +1,80 @@
+.friends-list-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.friends-list-container h3 {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    padding-left: 10px;
+}
+
+.friend-item-card {
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 250px;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.friend-item-card:hover {
+    transform: translateX(-10px);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-gold);
+}
+
+.friend-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-purple);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: white;
+    position: relative;
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-deep);
+}
+
+.status-indicator.online { background: #10b981; box-shadow: 0 0 5px #10b981; }
+.status-indicator.offline { background: #64748b; }
+
+.friend-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.friend-name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.friend-status-text {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
