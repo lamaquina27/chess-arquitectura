@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from typing import Dict, List
+from fastapi import WebSocket
 
 from entities import PartidaDB, MovimientoDB
 from repositories import usuario_repository, partida_repository, movimiento_repository
@@ -37,6 +39,10 @@ def mover_pieza(db: Session, partida, casilla_inicio: str, casilla_llegada: str,
 
     movimiento_repository.guardar(db, movimiento)
 
+    # Persistir el nuevo turno de la partida en la DB
+    partida_repository.actualizar(db)
+    db.refresh(partida)
+
     return partida, movimiento
 
 
@@ -55,3 +61,30 @@ def abandonar_partida(db: Session, partida):
     usuario_repository.actualizar_elo(db, ganador_id, 10)
 
     return partida
+
+class GameConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, List[WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, partida_id: str):
+        await websocket.accept()
+        if partida_id not in self.active_connections:
+            self.active_connections[partida_id] = []
+        self.active_connections[partida_id].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, partida_id: str):
+        if partida_id in self.active_connections:
+            if websocket in self.active_connections[partida_id]:
+                self.active_connections[partida_id].remove(websocket)
+            if not self.active_connections[partida_id]:
+                del self.active_connections[partida_id]
+
+    async def broadcast_movimiento(self, partida_id: str, movimiento_data: dict):
+        if partida_id in self.active_connections:
+            for connection in self.active_connections[partida_id]:
+                try:
+                    await connection.send_json(movimiento_data)
+                except:
+                    pass
+
+partida_ws_manager = GameConnectionManager()

@@ -3,22 +3,28 @@ import { useNavigate } from "react-router-dom";
 import "./Button.css"
 import PopupTipoPartida from "./PopupTipoPartida.jsx";
 import PopupConfirmacion from "./PopupConfirmacion.jsx";
+import PopupInvitarQR from "./PopupInvitarQR.jsx";
 
 
 function Button(props) {
     const navigate = useNavigate()
     const [usePopup, setUsePopup] = useState(false)
     const [showInicioPopup, setShowInicioPopup] = useState(false);
+    const [showInvitarPopup, setShowInvitarPopup] = useState(false);
     let texto = "";
     if (props.funcion == "iniciar") texto = "Inicia Partida";
     else if (props.funcion == "abandonar") texto = "Abandonar Partida";
     else if (props.funcion == "perfil") texto = "Ver Perfil";
     else if (props.funcion == "cerrar_sesion") texto = "Cerrar Sesión";
+    else if (props.funcion == "invitar_qr") texto = "Invitar Jugador a Jugador";
 
     const metodos = async () => {
         if (props.funcion == "iniciar") {
             // Ya no viajamos al tablero directamente, encendemos el menú flotante
             setShowInicioPopup(true);
+
+        } else if (props.funcion == "invitar_qr") {
+            setShowInvitarPopup(true);
 
         } else if (props.funcion == "abandonar") {
             setUsePopup(true);
@@ -43,6 +49,7 @@ function Button(props) {
 
             {/* Aquí agregamos el nuevo popup */}
             {showInicioPopup && <PopupTipoPartida cerrar={() => setShowInicioPopup(false)} />}
+            {showInvitarPopup && <PopupInvitarQR cerrar={() => setShowInvitarPopup(false)} />}
         </>
     )
 

@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from schemas import MovimientoRequest, CredencialesRival, AbandonoData
-from services.partida_service import iniciar_partida, mover_pieza, abandonar_partida
+from services.partida_service import iniciar_partida, mover_pieza, abandonar_partida, partida_ws_manager
+from fastapi import WebSocket, WebSocketDisconnect
 from services.auth_service import autenticar_usuario
 from repositories import usuario_repository, partida_repository, movimiento_repository
 from routers.registro_router import usuario_actual
@@ -82,9 +83,17 @@ def mover(movimiento: MovimientoRequest, user=Depends(usuario_actual), db: Sessi
         numero_movimiento=numero_mov
     )
 
-    return {
+    respuesta = {
         "turno": partida.turno,
         "casilla_inicio": mov.casilla_inicio,
         "casilla_llegada": mov.casilla_llegada,
-        "pieza": mov.pieza
+        "pieza": mov.pieza,
+        "usuario_movimiento": user.id
     }
+
+    # Transmitimos el movimiento a todos los conectados
+    import asyncio
+    asyncio.create_task(partida_ws_manager.broadcast_movimiento(partida.id, respuesta))
+
+    return respuesta
+

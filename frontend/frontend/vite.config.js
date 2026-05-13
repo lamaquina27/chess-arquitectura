@@ -17,7 +17,8 @@ export default defineConfig({
       },
       '/partida': {
         target: 'http://127.0.0.1:8000',
-        changeOrigin: true
+        changeOrigin: true,
+        ws: true
       },
       '/amistad': {
         target: 'http://127.0.0.1:8000',
