@@ -2,6 +2,7 @@ import { use, useState, useEffect, useRef } from "react"
 import { moverPieza } from "../api/mover_pieza"
 import { iniciarPartida } from "../api/iniciar_partida"
 import { useNavigate, useLocation } from "react-router-dom";
+import { obtenerMovimientos } from "../api/obtener_movimientos"
 
 import "./Partida.css"
 import Button from "../components/Button"
@@ -41,6 +42,7 @@ function Partida() {
     const [infoPartida, setInfoPartida] = useState(null)
     const [tablero, setTablero] = useState(() => crearTableroInicial())
     const [celdaSeleccionada, setCeldaSeleccionada] = useState(null)
+    const [casillasValidas, setCasillasValidas] = useState([])
     const [idPartida, setIdPartida] = useState(null)
     const [turno, setTurno] = useState("")
     const [miColor, setMiColor] = useState(null)
@@ -51,6 +53,8 @@ function Partida() {
     const miColorRef = useRef(null)
     const navigate = useNavigate()
     const location = useLocation()
+    const [mensaje, setMensaje] = useState("")
+    const mensajeTimeoutRef = useRef(null)
     useEffect(() => {
         const cargar = async () => {
             // Averiguamos si venimos del modo Multijugador (el Popup)
@@ -93,7 +97,7 @@ function Partida() {
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            
+
             if (data.action === "init") {
                 setMiColor(data.mi_color);
                 miColorRef.current = data.mi_color;
@@ -125,7 +129,13 @@ function Partida() {
 
     if (!infoPartida) return <div className="loading">Cargando partida...</div>
 
-    const manejarClickCelda = (casilla) => {
+    const mostrarMensaje = (texto) => {
+        if (mensajeTimeoutRef.current) clearTimeout(mensajeTimeoutRef.current)
+        setMensaje(texto)
+        mensajeTimeoutRef.current = setTimeout(() => setMensaje(""), 2500)
+    }
+
+    const manejarClickCelda = async (casilla) => {
         const pieza = tablero[casilla]
 
         // Fase 1: Seleccionar origen
@@ -133,35 +143,46 @@ function Partida() {
             if (pieza !== '') {
                 const esMayuscula = pieza === pieza.toUpperCase();
                 const colorPieza = esMayuscula ? "blanco" : "negro";
-                
+
                 if (esOnline) {
                     const miColorActual = miColorRef.current;
                     const turnoActual = turnoRef.current;
                     if (miColorActual === "observador") {
-                        alert("Solo estás observando la partida.");
+                        mostrarMensaje("Solo estás observando la partida.")
                         return;
                     }
                     if (colorPieza !== miColorActual) {
-                        alert(`Solo puedes mover tus piezas (${miColorActual}s)`);
+                        mostrarMensaje(`Solo puedes mover tus piezas (${miColorActual}s)`)
                         return;
                     }
                     if (miColorActual !== turnoActual) {
-                        alert(`Es el turno de tu rival.`);
+                        mostrarMensaje("Es el turno de tu rival.")
                         return;
                     }
                 } else {
                     if (colorPieza !== turno) {
-                        alert(`No es tu turno. Turno de las ${turno}s`);
+                        mostrarMensaje(`No es tu turno. Turno de las ${turno}s`)
                         return;
                     }
                 }
+                const validas = await obtenerMovimientos(idPartida, casilla)
+                setCasillasValidas(validas)
                 setCeldaSeleccionada(casilla)
             }
         }
+
         // Fase 2: Seleccionar destino o deseleccionar
         else {
+            setCasillasValidas([])
+
             // Si hace clic en la misma celda, deseleccionamos
             if (celdaSeleccionada === casilla) {
+                setCeldaSeleccionada(null)
+                return
+            }
+
+            // Bloquear cualquier destino que no sea válido según el motor de ajedrez
+            if (!casillasValidas.includes(casilla)) {
                 setCeldaSeleccionada(null)
                 return
             }
@@ -189,7 +210,7 @@ function Partida() {
                 moverPieza(celdaSeleccionada, casilla, piezaMovida, idPartida);
                 setTurno(turno === "blanco" ? "negro" : "blanco");
             }
-            
+
             setCeldaSeleccionada(null)
         }
     }
@@ -215,6 +236,9 @@ function Partida() {
                 <p>⚪ <b>Blancas:</b> {infoPartida.jugador_blanco}</p>
                 <p>⚫ <b>Negras:</b> {infoPartida.jugador_negro}</p>
                 <p className="turno">Turno actual: <b>{turno}</b></p>
+                {mensaje && (
+                    <p className="mensaje-juego">{mensaje}</p>
+                )}
             </div>
 
             <div className="tablero-wrapper">
@@ -240,11 +264,13 @@ function Partida() {
 
                                 const isSeleccionada = celdaSeleccionada === casilla
                                 const claseSeleccionada = isSeleccionada ? "celda-seleccionada" : ""
+                                const esPosible = casillasValidas.includes(casilla) && tablero[casilla] === ''
+                                const esCaptura = casillasValidas.includes(casilla) && tablero[casilla] !== ''
 
                                 return (
                                     <div
                                         key={casilla}
-                                        className={`celda ${colorClase} ${clasePieza} ${claseSeleccionada}`}
+                                        className={`celda ${colorClase} ${clasePieza} ${claseSeleccionada} ${esPosible ? 'celda-posible' : ''} ${esCaptura ? 'celda-captura' : ''}`}
                                         onClick={() => manejarClickCelda(casilla)}
                                         title={casilla}
                                     >

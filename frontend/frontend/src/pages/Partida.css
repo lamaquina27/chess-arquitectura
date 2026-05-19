@@ -74,7 +74,8 @@
     margin-right: 12px;
 }
 
-.coordenada-fila, .coordenada-col {
+.coordenada-fila,
+.coordenada-col {
     color: var(--text-dim);
     font-weight: 600;
     font-size: 0.9rem;
@@ -82,7 +83,8 @@
 }
 
 .coordenada-fila {
-    height: 70px; /* Reduced from 80px for a more compact board */
+    height: 70px;
+    /* Reduced from 80px for a more compact board */
     width: 20px;
     display: flex;
     align-items: center;
@@ -100,7 +102,7 @@
     border: 8px solid #1e293b;
     border-radius: 4px;
     overflow: hidden;
-    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
 .celda {
@@ -115,8 +117,15 @@
     position: relative;
 }
 
-.celda-clara { background-color: #c0b6b6; color: #505050; }
-.celda-oscura { background-color: #6d4c41; color: #f8fafc; }
+.celda-clara {
+    background-color: #c0b6b6;
+    color: #505050;
+}
+
+.celda-oscura {
+    background-color: #6d4c41;
+    color: #f8fafc;
+}
 
 .celda:hover {
     filter: brightness(1.1);
@@ -131,17 +140,18 @@
 /* --- Piezas --- */
 .pieza-blanca {
     color: #ffffff;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     transition: transform 0.2s ease;
 }
 
 .pieza-negra {
     color: #0f172a;
-    filter: drop-shadow(0 2px 4px rgba(255,255,255,0.1));
+    filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.1));
     transition: transform 0.2s ease;
 }
 
-.celda:active .pieza-blanca, .celda:active .pieza-negra {
+.celda:active .pieza-blanca,
+.celda:active .pieza-negra {
     transform: scale(0.9);
 }
 
@@ -166,19 +176,70 @@
 
 /* --- Animations --- */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes pulse {
-    0% { opacity: 0.6; transform: translateY(-50%) scale(1); }
-    50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
-    100% { opacity: 0.6; transform: translateY(-50%) scale(1); }
+    0% {
+        opacity: 0.6;
+        transform: translateY(-50%) scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.2);
+    }
+
+    100% {
+        opacity: 0.6;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+/* --- Casillas posibles (movimientos válidos) --- */
+.celda-posible::after {
+    content: '';
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 200, 100, 0.55);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.celda-captura::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 5px rgba(0, 200, 100, 0.75);
+    pointer-events: none;
+}
+
+.mensaje-juego {
+    color: #ff6b6b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    animation: fadeIn 0.2s ease-out;
+    transition: opacity 0.3s ease;
 }
 
 .loading {

@@ -5,6 +5,7 @@ from database import SessionLocal
 from services.partida_service import partida_ws_manager, mover_pieza
 from repositories import partida_repository, movimiento_repository, usuario_repository
 from services.sesion_service import decodificar_token
+from services.chess_engine.validador import validar_movimiento, detectar_estado_final
 
 router = APIRouter()
 
@@ -87,9 +88,21 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
                     await websocket.send_json({"error": "No es tu turno"})
                     continue
 
-                numero_mov = movimiento_repository.contar_por_partida(db_mov, partida.id) + 1
-
                 try:
+                    # ── Validar movimiento con el motor de ajedrez ─────────────────
+                    # Obtenemos el historial para reconstruir el tablero real.
+                    movimientos_previos = movimiento_repository.obtener_por_partida(db_mov, partida.id)
+                    numero_mov = len(movimientos_previos) + 1   # ← agregar acá
+                    es_valido, mensaje_error = validar_movimiento(
+                        movimientos_db=movimientos_previos,
+                        casilla_inicio=movimiento["casilla_inicio"],
+                        casilla_llegada=movimiento["casilla_llegada"],
+                        pieza=movimiento["pieza"]
+                    )
+                    if not es_valido:
+                        await websocket.send_json({"error": mensaje_error})
+                        continue
+
                     partida, mov = mover_pieza(
                         db=db_mov,
                         partida=partida,
@@ -99,12 +112,19 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
                         numero_movimiento=numero_mov
                     )
 
+                    # ── Detectar jaque mate tras el movimiento ──────────────────
+                    movimientos_actualizados = movimiento_repository.obtener_por_partida(db_mov, partida.id)
+                    estado = detectar_estado_final(movimientos_actualizados, partida.turno)
+
                     respuesta = {
                         "action": "update_board",
                         "turno": partida.turno,
                         "casilla_inicio": mov.casilla_inicio,
                         "casilla_llegada": mov.casilla_llegada,
-                        "pieza": mov.pieza
+                        "pieza": mov.pieza,
+                        "jaque": estado['jaque'],
+                        "jaque_mate": estado['jaque_mate'],
+                        "ahogado": estado['ahogado']
                     }
 
                     await partida_ws_manager.broadcast_movimiento(partida_id, respuesta)
