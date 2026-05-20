@@ -61,6 +61,19 @@ def abandonar_partida(db: Session, partida):
     usuario_repository.actualizar_elo(db, ganador_id, 10)
 
     return partida
+def listar_mov(db:Session,partida_id:str):
+    movimientos_db = movimiento_repository.obtener_mov_partida(db,partida_id)
+    historial = []
+    for m in movimientos_db:
+        historial.append(
+            {
+                "numero":m.numero_movimiento,
+                "pieza":m.pieza,
+                "casilla_inicio":m.casilla_inicio,
+                "casilla_llegada":m.casilla_llegada
+            }
+        )
+    return historial
 
 class GameConnectionManager:
     def __init__(self):

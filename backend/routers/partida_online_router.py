@@ -5,7 +5,7 @@ from database import SessionLocal
 from services.partida_service import partida_ws_manager, mover_pieza
 from repositories import partida_repository, movimiento_repository, usuario_repository
 from services.sesion_service import decodificar_token
-
+from services.partida_service import listar_mov
 router = APIRouter()
 
 
@@ -42,6 +42,7 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
 
     # 2. Sesión fresca solo para la autenticación inicial
     db_init = SessionLocal()
+    historial = listar_mov(db_init,partida_id)
     try:
         user = usuario_repository.obtener_por_id(db_init, user_id)
         if not user:
@@ -56,13 +57,15 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
         turno_actual = partida.turno
     finally:
         db_init.close()
-
+    
     # 3. Aceptar conexión y enviar estado inicial
     await partida_ws_manager.connect(websocket, partida_id)
     await websocket.send_json({
         "action": "init",
         "mi_color": color_jugador,
-        "turno": turno_actual
+        "turno": turno_actual,
+        "username":user.username,
+        "historial":historial
     })
 
     # 4. Loop principal — cada movimiento usa su PROPIA sesión de DB
@@ -70,49 +73,58 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
         while True:
             data = await websocket.receive_text()
             movimiento = json.loads(data)
+            mensaje = json.loads(data)
+            action = mensaje.get("action")
+            if movimiento.get("action") == "mover":
 
-            if movimiento.get("action") != "mover":
-                continue
-
-            # Sesión completamente nueva por movimiento → ve siempre el estado real de la DB
-            db_mov = SessionLocal()
-            try:
-                partida = partida_repository.obtener_por_id(db_mov, partida_id)
-
-                if partida is None:
-                    await websocket.send_json({"error": "Partida no encontrada"})
-                    continue
-
-                if partida.turno != color_jugador:
-                    await websocket.send_json({"error": "No es tu turno"})
-                    continue
-
-                numero_mov = movimiento_repository.contar_por_partida(db_mov, partida.id) + 1
-
+                # Sesión completamente nueva por movimiento → ve siempre el estado real de la DB
+                db_mov = SessionLocal()
                 try:
-                    partida, mov = mover_pieza(
-                        db=db_mov,
-                        partida=partida,
-                        casilla_inicio=movimiento["casilla_inicio"],
-                        casilla_llegada=movimiento["casilla_llegada"],
-                        pieza=movimiento["pieza"],
-                        numero_movimiento=numero_mov
-                    )
+                    partida = partida_repository.obtener_por_id(db_mov, partida_id)
 
-                    respuesta = {
-                        "action": "update_board",
-                        "turno": partida.turno,
-                        "casilla_inicio": mov.casilla_inicio,
-                        "casilla_llegada": mov.casilla_llegada,
-                        "pieza": mov.pieza
-                    }
+                    if partida is None:
+                        await websocket.send_json({"error": "Partida no encontrada"})
+                        continue
 
-                    await partida_ws_manager.broadcast_movimiento(partida_id, respuesta)
+                    if partida.turno != color_jugador:
+                        await websocket.send_json({"error": "No es tu turno"})
+                        continue
 
-                except Exception as e:
-                    await websocket.send_json({"error": str(e)})
-            finally:
-                db_mov.close()
+                    numero_mov = movimiento_repository.contar_por_partida(db_mov, partida.id) + 1
+
+                    try:
+                        partida, mov = mover_pieza(
+                            db=db_mov,
+                            partida=partida,
+                            casilla_inicio=movimiento["casilla_inicio"],
+                            casilla_llegada=movimiento["casilla_llegada"],
+                            pieza=movimiento["pieza"],
+                            numero_movimiento=numero_mov
+                        )
+
+                        respuesta = {
+                            "action": "update_board",
+                            "turno": partida.turno,
+                            "casilla_inicio": mov.casilla_inicio,
+                            "casilla_llegada": mov.casilla_llegada,
+                            "pieza": mov.pieza
+                        }
+
+                        await partida_ws_manager.broadcast_movimiento(partida_id, respuesta)
+
+                    except Exception as e:
+                        await websocket.send_json({"error": str(e)})
+                finally:
+                    db_mov.close()
+            elif action == "chat_message":
+                contenido = mensaje.get("contenido", "").strip()
+                if not contenido:
+                    continue
+                await partida_ws_manager.broadcast_movimiento(partida_id, {
+                    "action": "chat_message",
+                    "remitente": user.username,
+                    "contenido": contenido
+                })
 
     except WebSocketDisconnect:
         partida_ws_manager.disconnect(websocket, partida_id)
