@@ -55,6 +55,18 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
             return
 
         turno_actual = partida.turno
+        username = user.username
+        
+        movimientos_db = movimiento_repository.obtener_por_partida(db_init, partida_id)
+        historial = [
+            {
+                "numero": m.numero_movimiento,
+                "pieza": m.pieza,
+                "casilla_inicio": m.casilla_inicio,
+                "casilla_llegada": m.casilla_llegada
+            }
+            for m in movimientos_db
+        ]
     finally:
         db_init.close()
 
@@ -63,76 +75,88 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
     await websocket.send_json({
         "action": "init",
         "mi_color": color_jugador,
-        "turno": turno_actual
+        "turno": turno_actual,
+        "username": username,
+        "historial": historial
     })
 
     # 4. Loop principal — cada movimiento usa su PROPIA sesión de DB
     try:
         while True:
             data = await websocket.receive_text()
-            movimiento = json.loads(data)
+            mensaje = json.loads(data)
+            action = mensaje.get("action")
 
-            if movimiento.get("action") != "mover":
-                continue
-
-            # Sesión completamente nueva por movimiento → ve siempre el estado real de la DB
-            db_mov = SessionLocal()
-            try:
-                partida = partida_repository.obtener_por_id(db_mov, partida_id)
-
-                if partida is None:
-                    await websocket.send_json({"error": "Partida no encontrada"})
-                    continue
-
-                if partida.turno != color_jugador:
-                    await websocket.send_json({"error": "No es tu turno"})
-                    continue
-
+            if action == "mover":
+                # Sesión completamente nueva por movimiento → ve siempre el estado real de la DB
+                db_mov = SessionLocal()
                 try:
-                    # ── Validar movimiento con el motor de ajedrez ─────────────────
-                    # Obtenemos el historial para reconstruir el tablero real.
-                    movimientos_previos = movimiento_repository.obtener_por_partida(db_mov, partida.id)
-                    numero_mov = len(movimientos_previos) + 1   # ← agregar acá
-                    es_valido, mensaje_error = validar_movimiento(
-                        movimientos_db=movimientos_previos,
-                        casilla_inicio=movimiento["casilla_inicio"],
-                        casilla_llegada=movimiento["casilla_llegada"],
-                        pieza=movimiento["pieza"]
-                    )
-                    if not es_valido:
-                        await websocket.send_json({"error": mensaje_error})
+                    partida = partida_repository.obtener_por_id(db_mov, partida_id)
+
+                    if partida is None:
+                        await websocket.send_json({"error": "Partida no encontrada"})
                         continue
 
-                    partida, mov = mover_pieza(
-                        db=db_mov,
-                        partida=partida,
-                        casilla_inicio=movimiento["casilla_inicio"],
-                        casilla_llegada=movimiento["casilla_llegada"],
-                        pieza=movimiento["pieza"],
-                        numero_movimiento=numero_mov
-                    )
+                    if partida.turno != color_jugador:
+                        await websocket.send_json({"error": "No es tu turno"})
+                        continue
 
-                    # ── Detectar jaque mate tras el movimiento ──────────────────
-                    movimientos_actualizados = movimiento_repository.obtener_por_partida(db_mov, partida.id)
-                    estado = detectar_estado_final(movimientos_actualizados, partida.turno)
+                    try:
+                        # ── Validar movimiento con el motor de ajedrez ─────────────────
+                        # Obtenemos el historial para reconstruir el tablero real.
+                        movimientos_previos = movimiento_repository.obtener_por_partida(db_mov, partida.id)
+                        numero_mov = len(movimientos_previos) + 1
+                        es_valido, mensaje_error = validar_movimiento(
+                            movimientos_db=movimientos_previos,
+                            casilla_inicio=mensaje["casilla_inicio"],
+                            casilla_llegada=mensaje["casilla_llegada"],
+                            pieza=mensaje["pieza"]
+                        )
+                        if not es_valido:
+                            await websocket.send_json({"error": mensaje_error})
+                            continue
 
-                    respuesta = {
-                        "action": "update_board",
-                        "turno": partida.turno,
-                        "casilla_inicio": mov.casilla_inicio,
-                        "casilla_llegada": mov.casilla_llegada,
-                        "pieza": mov.pieza,
-                        "jaque": estado['jaque'],
-                        "jaque_mate": estado['jaque_mate'],
-                        "ahogado": estado['ahogado']
-                    }
+                        partida, mov = mover_pieza(
+                            db=db_mov,
+                            partida=partida,
+                            casilla_inicio=mensaje["casilla_inicio"],
+                            casilla_llegada=mensaje["casilla_llegada"],
+                            pieza=mensaje["pieza"],
+                            numero_movimiento=numero_mov
+                        )
 
-                    await partida_ws_manager.broadcast_movimiento(partida_id, respuesta)
+                        # ── Detectar jaque mate tras el movimiento ──────────────────
+                        movimientos_actualizados = movimiento_repository.obtener_por_partida(db_mov, partida.id)
+                        estado = detectar_estado_final(movimientos_actualizados, partida.turno)
 
-                except Exception as e:
-                    await websocket.send_json({"error": str(e)})
-            finally:
-                db_mov.close()
+                        respuesta = {
+                            "action": "update_board",
+                            "turno": partida.turno,
+                            "casilla_inicio": mov.casilla_inicio,
+                            "casilla_llegada": mov.casilla_llegada,
+                            "pieza": mov.pieza,
+                            "numero_movimiento": numero_mov,
+                            "jaque": estado['jaque'],
+                            "jaque_mate": estado['jaque_mate'],
+                            "ahogado": estado['ahogado']
+                        }
+
+                        await partida_ws_manager.broadcast_movimiento(partida_id, respuesta)
+
+                    except Exception as e:
+                        await websocket.send_json({"error": str(e)})
+                finally:
+                    db_mov.close()
+
+            elif action == "chat_message":
+                contenido = mensaje.get("contenido", "").strip()
+                if not contenido:
+                    continue
+                await partida_ws_manager.broadcast_movimiento(partida_id, {
+                    "action": "chat_message",
+                    "remitente": username,
+                    "contenido": contenido
+                })
 
     except WebSocketDisconnect:
         partida_ws_manager.disconnect(websocket, partida_id)
