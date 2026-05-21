@@ -46,8 +46,8 @@ def mover_pieza(db: Session, partida, casilla_inicio: str, casilla_llegada: str,
     return partida, movimiento
 
 
-def abandonar_partida(db: Session, partida):
-    if partida.turno == "blanco":
+def abandonar_partida(db: Session, partida, user_id: str):
+    if partida.jugador_blancas == user_id:
         perdedor_id = partida.jugador_blancas
         ganador_id = partida.jugador_negras
     else:

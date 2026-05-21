@@ -54,7 +54,7 @@ def abandono(datos: AbandonoData, user=Depends(usuario_actual), db: Session = De
     if not partida:
         raise HTTPException(status_code=404, detail="partida no encontrada")
 
-    partida = abandonar_partida(db, partida)
+    partida = abandonar_partida(db, partida, user.id)
 
     return {
         "jugador_blanco": partida.jugador_blancas,

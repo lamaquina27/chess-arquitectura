@@ -234,12 +234,43 @@
     pointer-events: none;
 }
 
-.mensaje-juego {
-    color: #ff6b6b;
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.toast {
+    padding: 12px 20px;
+    border-radius: 12px;
     font-weight: 600;
     font-size: 0.95rem;
-    animation: fadeIn 0.2s ease-out;
-    transition: opacity 0.3s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.toast-aviso {
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    color: #fbbf24;
+}
+
+.toast-jaque {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
 }
 
 .loading {

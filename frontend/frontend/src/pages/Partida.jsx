@@ -6,6 +6,7 @@ import { obtenerMovimientos } from "../api/obtener_movimientos"
 
 import "./Partida.css"
 import Button from "../components/Button"
+import PopupPerdida from "../components/PopupPerdida"
 
 // Tablero inicial en notación algebraica
 const COLUMNAS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
@@ -67,6 +68,8 @@ function Partida() {
     const location = useLocation()
     const [mensaje, setMensaje] = useState("")
     const mensajeTimeoutRef = useRef(null)
+    const [enJaque, setEnJaque] = useState(false)
+    const [estadoFinal, setEstadoFinal] = useState(null)
     useEffect(() => {
         const cargar = async () => {
             // Averiguamos si venimos del modo Multijugador (el Popup)
@@ -147,6 +150,7 @@ function Partida() {
                         casilla_inicio: data.casilla_inicio,
                         casilla_llegada: data.casilla_llegada
                     }]);
+                    procesarEstadoJuego(data);
                 }
             } else if (data.action === "chat_message") {
                 setMensajesChat(prev => [...prev, {
@@ -172,7 +176,22 @@ function Partida() {
         mensajeTimeoutRef.current = setTimeout(() => setMensaje(""), 2500)
     }
 
+    const procesarEstadoJuego = (estado) => {
+        if (estado.jaque_mate) {
+            setEstadoFinal("jaque_mate")
+            setEnJaque(false)
+        } else if (estado.ahogado) {
+            setEstadoFinal("ahogado")
+            setEnJaque(false)
+        } else if (estado.jaque) {
+            setEnJaque(true)
+        } else {
+            setEnJaque(false)
+        }
+    }
+
     const manejarClickCelda = async (casilla) => {
+        if (estadoFinal) return
         const pieza = tablero[casilla]
 
         // Fase 1: Seleccionar origen
@@ -244,8 +263,11 @@ function Partida() {
                     nuevo[celdaSeleccionada] = ''
                     return nuevo
                 })
-                moverPieza(celdaSeleccionada, casilla, piezaMovida, idPartida);
-                setTurno(turno === "blanco" ? "negro" : "blanco");
+                const respuesta = await moverPieza(celdaSeleccionada, casilla, piezaMovida, idPartida);
+                if (respuesta) {
+                    setTurno(respuesta.turno);
+                    procesarEstadoJuego(respuesta);
+                }
                 setMovimientos(prev => [...prev, {
                     numero: prev.length + 1,
                     pieza: piezaMovida,
@@ -287,8 +309,14 @@ function Partida() {
                 <p>⚪ <b>Blancas:</b> {infoPartida.jugador_blanco}</p>
                 <p>⚫ <b>Negras:</b> {infoPartida.jugador_negro}</p>
                 <p className="turno">Turno actual: <b>{turno}</b></p>
+            </div>
+
+            <div className="toast-container">
                 {mensaje && (
-                    <p className="mensaje-juego">{mensaje}</p>
+                    <div className="toast toast-aviso">{mensaje}</div>
+                )}
+                {enJaque && !estadoFinal && (!esOnline || miColor === turno) && (
+                    <div className="toast toast-jaque">⚠️ ¡Estás en jaque!</div>
                 )}
             </div>
 
@@ -402,6 +430,10 @@ function Partida() {
             <div className="opciones">
                 <Button funcion='abandonar' idPartida={idPartida}></Button>
             </div>
+
+            {estadoFinal && (
+                <PopupPerdida motivo={estadoFinal} />
+            )}
         </div>
     )
 }
