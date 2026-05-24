@@ -55,8 +55,9 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
             return
 
         turno_actual = partida.turno
+        tiempo_inicial = partida.tiempo_inicial
         username = user.username
-        
+
         movimientos_db = movimiento_repository.obtener_por_partida(db_init, partida_id)
         historial = [
             {
@@ -67,6 +68,9 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
             }
             for m in movimientos_db
         ]
+
+        rival_id = partida.jugador_negras if color_jugador == "blanco" else partida.jugador_blancas
+        rival_user = usuario_repository.obtener_por_id(db_init, rival_id) if rival_id else None
     finally:
         db_init.close()
 
@@ -77,7 +81,11 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
         "mi_color": color_jugador,
         "turno": turno_actual,
         "username": username,
-        "historial": historial
+        "mi_elo": user.elo,
+        "rival_username": rival_user.username if rival_user else "—",
+        "rival_elo": rival_user.elo if rival_user else None,
+        "historial": historial,
+        "tiempo_inicial": tiempo_inicial
     })
 
     # 4. Loop principal — cada movimiento usa su PROPIA sesión de DB
@@ -103,7 +111,6 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
 
                     try:
                         # ── Validar movimiento con el motor de ajedrez ─────────────────
-                        # Obtenemos el historial para reconstruir el tablero real.
                         movimientos_previos = movimiento_repository.obtener_por_partida(db_mov, partida.id)
                         numero_mov = len(movimientos_previos) + 1
                         es_valido, mensaje_error = validar_movimiento(
@@ -116,12 +123,20 @@ async def websocket_online_partida(websocket: WebSocket, partida_id: str, token:
                             await websocket.send_json({"error": mensaje_error})
                             continue
 
+                        # ── Coronación de peón ──────────────────────────────────────────
+                        pieza_coronacion = mensaje.get("pieza_coronacion")
+                        piezas_validas_corona = {'D', 'T', 'A', 'C', 'd', 't', 'a', 'c'}
+                        if pieza_coronacion and pieza_coronacion not in piezas_validas_corona:
+                            await websocket.send_json({"error": "Pieza de coronación inválida"})
+                            continue
+                        pieza_a_guardar = pieza_coronacion if pieza_coronacion else mensaje["pieza"]
+
                         partida, mov = mover_pieza(
                             db=db_mov,
                             partida=partida,
                             casilla_inicio=mensaje["casilla_inicio"],
                             casilla_llegada=mensaje["casilla_llegada"],
-                            pieza=mensaje["pieza"],
+                            pieza=pieza_a_guardar,
                             numero_movimiento=numero_mov
                         )
 

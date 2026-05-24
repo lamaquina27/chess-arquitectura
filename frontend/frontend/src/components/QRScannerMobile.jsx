@@ -2,30 +2,19 @@ import { useState, useRef, useEffect } from 'react';
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { verificarQRLogin } from '../api/qr_login';
 
-function QRScannerMobile() {
+function QRScannerMobile({ onClose }) {
     const [resultado, setResultado] = useState("");
     const [escaneando, setEscaneando] = useState(false);
     const videoRef = useRef(null);
-    const controlsRef = useRef(null); // Reference to keep the scanning active/inactive
+    const controlsRef = useRef(null);
 
     const iniciarEscaneo = async () => {
         setEscaneando(true);
         setResultado("");
         try {
             const codeReader = new BrowserQRCodeReader();
-            const videoInputDevices = await BrowserQRCodeReader.listVideoInputDevices();
-
-            if (videoInputDevices.length === 0) {
-                setResultado("No se encontraron cámaras en este dispositivo.");
-                setEscaneando(false);
-                return;
-            }
-            // Seleccionamos la cámara (la última suele ser la trasera en móviles)
-            const selectedDeviceId = videoInputDevices.length > 1
-                ? videoInputDevices[videoInputDevices.length - 1].deviceId
-                : videoInputDevices[0].deviceId;
-            controlsRef.current = await codeReader.decodeFromVideoDevice(
-                selectedDeviceId,
+            controlsRef.current = await codeReader.decodeFromConstraints(
+                { video: { facingMode: { exact: 'environment' } } },
                 videoRef.current,
                 async (result, error, controls) => {
                     if (result) {
@@ -45,55 +34,92 @@ function QRScannerMobile() {
                             } else {
                                 setResultado("Formato de QR inválido");
                             }
-                        } catch (e) {
+                        } catch {
                             setResultado("El código QR no es válido para esta app");
                         }
                     }
                 }
             );
-        } catch (error) {
-            console.error(error);
-            // Esto nos dirá si es un problema de HTTPS (NotAllowedError o SecurityError)
-            setResultado(`Error: ${error.name} - ${error.message}`);
-            setEscaneando(false);
+        } catch {
+            // Si 'exact' falla (ej. dispositivo con una sola cámara), reintentamos sin restricción estricta
+            try {
+                const codeReader2 = new BrowserQRCodeReader();
+                controlsRef.current = await codeReader2.decodeFromConstraints(
+                    { video: { facingMode: 'environment' } },
+                    videoRef.current,
+                    async (result, error, controls) => {
+                        if (result) {
+                            controls.stop();
+                            setEscaneando(false);
+                            const dataString = result.getText();
+                            try {
+                                const data = JSON.parse(dataString);
+                                if (data.sala && data.token) {
+                                    setResultado("Validando código QR...");
+                                    const res = await verificarQRLogin(data.sala, data.token);
+                                    if (res.error) {
+                                        setResultado(`Error: ${res.mensaje}`);
+                                    } else {
+                                        setResultado("¡Monitor logueado con éxito!");
+                                    }
+                                } else {
+                                    setResultado("Formato de QR inválido");
+                                }
+                            } catch {
+                                setResultado("El código QR no es válido para esta app");
+                            }
+                        }
+                    }
+                );
+            } catch (err2) {
+                setResultado(`Error al abrir cámara: ${err2.message}`);
+                setEscaneando(false);
+            }
         }
     };
 
     const detenerEscaneo = () => {
-        if (controlsRef.current) {
-            controlsRef.current.stop();
-        }
+        if (controlsRef.current) controlsRef.current.stop();
         setEscaneando(false);
     };
 
     useEffect(() => {
-        // Cleanup al desmontar el componente
         return () => {
-            if (controlsRef.current) {
-                controlsRef.current.stop();
-            }
+            if (controlsRef.current) controlsRef.current.stop();
         };
     }, []);
 
     return (
-        <div style={{ textAlign: 'center', padding: '20px', background: '#2c2c2c', borderRadius: '10px', marginTop: '20px' }}>
-            <h3 style={{ color: 'white' }}>Escanear QR de Monitor</h3>
+        <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>
+                Escanear QR de Monitor
+            </p>
 
             {escaneando ? (
                 <div>
-                    <video ref={videoRef} style={{ width: '100%', maxWidth: '300px', borderRadius: '10px' }}></video>
+                    <video ref={videoRef} style={{ width: '100%', maxWidth: '280px', borderRadius: '12px', background: '#000' }} />
                     <br />
-                    <button onClick={detenerEscaneo} style={{ marginTop: '10px', padding: '10px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                    <button
+                        onClick={detenerEscaneo}
+                        style={{ marginTop: 12, padding: '10px 24px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.9rem' }}
+                    >
                         Cancelar
                     </button>
                 </div>
             ) : (
-                <button onClick={iniciarEscaneo} style={{ marginTop: '10px', padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                <button
+                    onClick={iniciarEscaneo}
+                    style={{ padding: '11px 28px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.15s' }}
+                >
                     Abrir Cámara
                 </button>
             )}
 
-            {resultado && <p style={{ color: '#f1c40f', marginTop: '15px' }}>{resultado}</p>}
+            {resultado && (
+                <p style={{ marginTop: 16, fontSize: '0.875rem', padding: '10px 14px', borderRadius: 10, background: resultado.includes('éxito') ? '#f0fdf4' : '#fef2f2', color: resultado.includes('éxito') ? '#16a34a' : '#dc2626', border: `1px solid ${resultado.includes('éxito') ? '#bbf7d0' : '#fecaca'}` }}>
+                    {resultado}
+                </p>
+            )}
         </div>
     );
 }

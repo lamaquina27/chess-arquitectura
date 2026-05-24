@@ -16,7 +16,7 @@ function Button(props) {
     else if (props.funcion == "abandonar") texto = "Abandonar Partida";
     else if (props.funcion == "perfil") texto = "Ver Perfil";
     else if (props.funcion == "cerrar_sesion") texto = "Cerrar Sesión";
-    else if (props.funcion == "invitar_qr") texto = "Invitar Jugador a Jugador";
+    else if (props.funcion == "invitar_qr") texto = "Jugar con QR";
 
     const metodos = async () => {
         if (props.funcion == "iniciar") {

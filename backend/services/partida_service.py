@@ -7,15 +7,30 @@ from repositories import usuario_repository, partida_repository, movimiento_repo
 from utils import generar_id
 
 
-def iniciar_partida(db: Session, usuario, id_jugador_negro=None):
+def iniciar_partida(db: Session, usuario, id_jugador_negro=None, color_host: str = "aleatorio", tiempo: int = None):
+    import random as _rand
     new_id = generar_id()
 
+    if id_jugador_negro:
+        if color_host == "blancas":
+            blancas_id, negras_id = usuario.id, id_jugador_negro
+        elif color_host == "negras":
+            blancas_id, negras_id = id_jugador_negro, usuario.id
+        else:
+            if _rand.random() < 0.5:
+                blancas_id, negras_id = usuario.id, id_jugador_negro
+            else:
+                blancas_id, negras_id = id_jugador_negro, usuario.id
+    else:
+        blancas_id, negras_id = usuario.id, None
+
     partida = PartidaDB(
-        jugador_blancas=usuario.id,
-        jugador_negras=id_jugador_negro,
+        jugador_blancas=blancas_id,
+        jugador_negras=negras_id,
         id=new_id,
         turno="blanco",
-        jugador_actual=usuario.id
+        jugador_actual=blancas_id,
+        tiempo_inicial=tiempo
     )
 
     return partida_repository.guardar(db, partida)

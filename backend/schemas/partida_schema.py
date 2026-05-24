@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class MovimientoRequest(BaseModel):
@@ -6,6 +7,7 @@ class MovimientoRequest(BaseModel):
     casilla_llegada: str
     pieza: str
     id_partida: str
+    pieza_coronacion: Optional[str] = None
 
 
 class CredencialesRival(BaseModel):

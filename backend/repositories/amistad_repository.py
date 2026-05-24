@@ -2,34 +2,37 @@ from database import get_db
 from sqlalchemy.orm import Session
 from entities.amistad_entity import AmistadDB
 
-from sqlalchemy import or_ # IMPORTANTE: Pon esto arriba del todo en tus imports
+from sqlalchemy import or_, and_
 
 def obtener_amigos(db: Session, mi_id: str):
-    # 1. Buscamos todas las amistades donde participe el usuario y estén aceptadas
     amistades = db.query(AmistadDB).filter(
         or_(AmistadDB.usuario_id == mi_id, AmistadDB.amigo_id == mi_id),
         AmistadDB.estado == "aceptado"
     ).all()
-    
+
     lista_amigos = []
     for amistad in amistades:
-        # 2. Identificamos el ID de la otra persona (el que NO soy yo)
         id_amigo = amistad.amigo_id if amistad.usuario_id == mi_id else amistad.usuario_id
-        
-        # 3. Buscamos los datos de esa otra persona
         usuario = db.query(UsuarioDB).filter(UsuarioDB.id == id_amigo).first()
         if usuario:
             lista_amigos.append({
                 "id": usuario.id,
                 "nombre": usuario.username,
-                "avatar": usuario.username[:2].upper(), # Tomamos 2 letras de su nombre para el circulito
-                "estado": "online" # Lo dejaremos fijo por ahora
+                "elo": usuario.elo,
+                "avatar": usuario.username[:2].upper(),
+                "estado": "online"
             })
-            
+
     return lista_amigos
 
-def obtener_solicitud(db:Session,usuario_id:str,amistad_id:str):
-    solicitud = db.query(AmistadDB).filter(AmistadDB.usuario_id == usuario_id, AmistadDB.amigo_id == amistad_id).first()
+def obtener_solicitud(db: Session, usuario_id: str, amistad_id: str):
+    # Verificar ambas direcciones y cualquier estado (pendiente o aceptado)
+    solicitud = db.query(AmistadDB).filter(
+        or_(
+            and_(AmistadDB.usuario_id == usuario_id, AmistadDB.amigo_id == amistad_id),
+            and_(AmistadDB.usuario_id == amistad_id, AmistadDB.amigo_id == usuario_id)
+        )
+    ).first()
     return solicitud
 def crear_solicitud(db:Session,amistad :AmistadDB):
     db.add(amistad)

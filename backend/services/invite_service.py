@@ -1,21 +1,23 @@
-import uuid
 import secrets
-from typing import Dict
+from typing import Dict, Optional
 from fastapi import WebSocket
 
 class InviteService:
     def __init__(self):
-        # { "invite_id": {"host_user": user_obj, "websocket": WebSocket | None} }
+        # { "invite_id": {"host_user": user_obj, "websocket": WebSocket | None, "color_host": str, "tiempo": int | None} }
         self.invites: Dict[str, dict] = {}
 
-    def generar_invite(self, host_user) -> str:
-        """Genera un invite único."""
+    def generar_invite(self, host_user, color_host: str = "aleatorio", tiempo: Optional[int] = None) -> str:
         invite_id = secrets.token_urlsafe(16)
-        self.invites[invite_id] = {"host_user": host_user, "websocket": None}
+        self.invites[invite_id] = {
+            "host_user": host_user,
+            "websocket": None,
+            "color_host": color_host,
+            "tiempo": tiempo
+        }
         return invite_id
 
     async def conectar_host(self, websocket: WebSocket, invite_id: str):
-        """Conecta el websocket del host a la sala de espera de la invitación."""
         await websocket.accept()
         if invite_id in self.invites:
             self.invites[invite_id]["websocket"] = websocket

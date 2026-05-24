@@ -17,10 +17,13 @@ router = APIRouter()
 @router.get("/iniciar")
 def iniciar(user=Depends(usuario_actual), db: Session = Depends(get_db)):
     partida = iniciar_partida(db, user)
+    blancas = usuario_repository.obtener_por_id(db, partida.jugador_blancas)
 
     return {
-        "jugador_blanco": partida.jugador_blancas,
-        "jugador_negro": partida.jugador_negras,
+        "jugador_blanco": blancas.username if blancas else partida.jugador_blancas,
+        "jugador_blanco_elo": blancas.elo if blancas else 1000,
+        "jugador_negro": "Práctica",
+        "jugador_negro_elo": None,
         "turno": partida.turno,
         "id_partida": partida.id
     }
@@ -38,23 +41,32 @@ def iniciar_multijugador(datos_rival: CredencialesRival, user=Depends(usuario_ac
         raise HTTPException(status_code=400, detail="¡No puedes jugar contra ti mismo!")
 
     partida = iniciar_partida(db, user, rival.id)
+    blancas = usuario_repository.obtener_por_id(db, partida.jugador_blancas)
+    negras  = usuario_repository.obtener_por_id(db, partida.jugador_negras)
 
     return {
-        "jugador_blanco": partida.jugador_blancas,
-        "jugador_negro": partida.jugador_negras,
+        "jugador_blanco": blancas.username if blancas else partida.jugador_blancas,
+        "jugador_blanco_elo": blancas.elo if blancas else 1000,
+        "jugador_negro": negras.username if negras else partida.jugador_negras,
+        "jugador_negro_elo": negras.elo if negras else 1000,
         "turno": partida.turno,
         "id_partida": partida.id
     }
 
 
 @router.post("/abandono")
-def abandono(datos: AbandonoData, user=Depends(usuario_actual), db: Session = Depends(get_db)):
+async def abandono(datos: AbandonoData, user=Depends(usuario_actual), db: Session = Depends(get_db)):
     partida = partida_repository.obtener_por_id(db, datos.id_partida)
 
     if not partida:
         raise HTTPException(status_code=404, detail="partida no encontrada")
 
     partida = abandonar_partida(db, partida, user.id)
+    ganador_color = "blanco" if partida.ganador == partida.jugador_blancas else "negro"
+    await partida_ws_manager.broadcast_movimiento(datos.id_partida, {
+        "action": "abandono",
+        "ganador_color": ganador_color
+    })
 
     return {
         "jugador_blanco": partida.jugador_blancas,
@@ -74,8 +86,6 @@ async def mover(movimiento: MovimientoRequest, user=Depends(usuario_actual), db:
         raise HTTPException(status_code=403, detail="No es tu turno, espera a que mueva tu oponente.")
 
     # ── Validación de movimiento legal (motor de ajedrez) ─────────────────────
-    # Obtenemos todos los movimientos previos de la partida para reconstruir
-    # el tablero y luego verificar si el movimiento propuesto es legal.
     movimientos_previos = movimiento_repository.obtener_por_partida(db, partida.id)
     es_valido, mensaje_error = validar_movimiento(
         movimientos_db=movimientos_previos,
@@ -86,6 +96,15 @@ async def mover(movimiento: MovimientoRequest, user=Depends(usuario_actual), db:
     if not es_valido:
         raise HTTPException(status_code=422, detail=mensaje_error)
 
+    # ── Coronación de peón: validar y sustituir pieza ──────────────────────────
+    piezas_validas_corona = {'D', 'T', 'A', 'C', 'd', 't', 'a', 'c'}
+    if movimiento.pieza_coronacion:
+        if movimiento.pieza_coronacion not in piezas_validas_corona:
+            raise HTTPException(status_code=422, detail="Pieza de coronación inválida")
+        pieza_a_guardar = movimiento.pieza_coronacion
+    else:
+        pieza_a_guardar = movimiento.pieza
+
     numero_mov = len(movimientos_previos) + 1
 
     partida, mov = mover_pieza(
@@ -93,7 +112,7 @@ async def mover(movimiento: MovimientoRequest, user=Depends(usuario_actual), db:
         partida=partida,
         casilla_inicio=movimiento.casilla_inicio,
         casilla_llegada=movimiento.casilla_llegada,
-        pieza=movimiento.pieza,
+        pieza=pieza_a_guardar,
         numero_movimiento=numero_mov
     )
 
