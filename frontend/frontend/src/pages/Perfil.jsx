@@ -45,8 +45,16 @@ function Perfil() {
     }
 
     const handleAgregarAmigo = async () => {
+        if (datosPerfil.id_usuario === resultadoBusqueda.id) {
+            setMensaje("No puedes enviarte una solicitud a ti mismo.");
+            return;
+        }
         try {
-            await enviarSolicitud(datosPerfil.id_usuario, resultadoBusqueda.id);
+            const resultado = await enviarSolicitud(datosPerfil.id_usuario, resultadoBusqueda.id);
+            if (resultado.error) {
+                setMensaje(resultado.mensaje);
+                return;
+            }
             setMensaje("¡Solicitud enviada con éxito!");
             setResultadoBusqueda(null);
             setBusqueda("");

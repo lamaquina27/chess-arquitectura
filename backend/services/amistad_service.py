@@ -11,9 +11,11 @@ def listar_amigos(db: Session, mi_id: str):
     return obtener_amigos(db, mi_id)
 
 def crear_solicitud_service(db:Session,usuario_id:str,amistad_id:str):
+    if usuario_id == amistad_id:
+        raise HTTPException(status_code=400, detail="No puedes enviarte una solicitud a ti mismo")
     solicitud = obtener_solicitud(db,usuario_id,amistad_id)
     if solicitud:
-        raise HTTPException(status_code=400, detail="La solicitud usuario ya existe")
+        raise HTTPException(status_code=400, detail="Amigo ya existente")
     new_id = generar_id()
     solicitud_nueva = AmistadDB(
         id=new_id,

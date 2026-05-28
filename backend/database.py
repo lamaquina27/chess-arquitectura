@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Estructura: mysql+pymysql://usuario:password@host:puerto/nombre_bd
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:@localhost:3306/chess_db"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:@localhost:3306/CHESSE"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

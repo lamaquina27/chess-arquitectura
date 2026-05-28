@@ -12,5 +12,9 @@ export async function enviarSolicitud(idUsuario, idAmistad) {
         })
     });
 
-    return await response.json();
+    const data = await response.json();
+    if (!response.ok) {
+        return { error: true, mensaje: data.detail || "No se pudo enviar la solicitud." };
+    }
+    return data;
 }

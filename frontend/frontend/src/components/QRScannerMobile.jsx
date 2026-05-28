@@ -8,71 +8,67 @@ function QRScannerMobile({ onClose }) {
     const videoRef = useRef(null);
     const controlsRef = useRef(null);
 
+    const manejarResultadoQR = async (dataString, controls) => {
+        controls.stop();
+        setEscaneando(false);
+        try {
+            const data = JSON.parse(dataString);
+            if (data.sala && data.token) {
+                setResultado("Validando código QR...");
+                const res = await verificarQRLogin(data.sala, data.token);
+                if (res.error) {
+                    setResultado(`Error: ${res.mensaje}`);
+                } else {
+                    setResultado("¡Monitor logueado con éxito!");
+                }
+            } else {
+                setResultado("Formato de QR inválido");
+            }
+        } catch {
+            setResultado("El código QR no es válido para esta app");
+        }
+    };
+
+    const obtenerConstraintCamaraTrasera = async () => {
+        // Pedir permiso primero para que los labels de dispositivos estén disponibles
+        const streamTemporal = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamTemporal.getTracks().forEach(t => t.stop());
+
+        const dispositivos = await navigator.mediaDevices.enumerateDevices();
+        const camaras = dispositivos.filter(d => d.kind === 'videoinput');
+
+        const camaraTrasera = camaras.find(d => /back|rear|environment|trasera/i.test(d.label));
+
+        if (camaraTrasera) {
+            return { video: { deviceId: { exact: camaraTrasera.deviceId } } };
+        }
+        // Si no encontramos por label, usamos facingMode estricto
+        return { video: { facingMode: { exact: 'environment' } } };
+    };
+
     const iniciarEscaneo = async () => {
         setEscaneando(true);
         setResultado("");
+
+        const callback = (result, error, controls) => {
+            if (result) manejarResultadoQR(result.getText(), controls);
+        };
+
         try {
+            const constraint = await obtenerConstraintCamaraTrasera();
             const codeReader = new BrowserQRCodeReader();
-            controlsRef.current = await codeReader.decodeFromConstraints(
-                { video: { facingMode: { exact: 'environment' } } },
-                videoRef.current,
-                async (result, error, controls) => {
-                    if (result) {
-                        controls.stop();
-                        setEscaneando(false);
-                        const dataString = result.getText();
-                        try {
-                            const data = JSON.parse(dataString);
-                            if (data.sala && data.token) {
-                                setResultado("Validando código QR...");
-                                const res = await verificarQRLogin(data.sala, data.token);
-                                if (res.error) {
-                                    setResultado(`Error: ${res.mensaje}`);
-                                } else {
-                                    setResultado("¡Monitor logueado con éxito!");
-                                }
-                            } else {
-                                setResultado("Formato de QR inválido");
-                            }
-                        } catch {
-                            setResultado("El código QR no es válido para esta app");
-                        }
-                    }
-                }
-            );
+            controlsRef.current = await codeReader.decodeFromConstraints(constraint, videoRef.current, callback);
         } catch {
-            // Si 'exact' falla (ej. dispositivo con una sola cámara), reintentamos sin restricción estricta
+            // Fallback: dejar que el browser elija la cámara trasera sin restricción estricta
             try {
-                const codeReader2 = new BrowserQRCodeReader();
-                controlsRef.current = await codeReader2.decodeFromConstraints(
+                const codeReader = new BrowserQRCodeReader();
+                controlsRef.current = await codeReader.decodeFromConstraints(
                     { video: { facingMode: 'environment' } },
                     videoRef.current,
-                    async (result, error, controls) => {
-                        if (result) {
-                            controls.stop();
-                            setEscaneando(false);
-                            const dataString = result.getText();
-                            try {
-                                const data = JSON.parse(dataString);
-                                if (data.sala && data.token) {
-                                    setResultado("Validando código QR...");
-                                    const res = await verificarQRLogin(data.sala, data.token);
-                                    if (res.error) {
-                                        setResultado(`Error: ${res.mensaje}`);
-                                    } else {
-                                        setResultado("¡Monitor logueado con éxito!");
-                                    }
-                                } else {
-                                    setResultado("Formato de QR inválido");
-                                }
-                            } catch {
-                                setResultado("El código QR no es válido para esta app");
-                            }
-                        }
-                    }
+                    callback
                 );
-            } catch (err2) {
-                setResultado(`Error al abrir cámara: ${err2.message}`);
+            } catch (err) {
+                setResultado(`Error al abrir cámara: ${err.message}`);
                 setEscaneando(false);
             }
         }
